@@ -2,7 +2,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 using CleanHr.DepartmentApi.Application.Caching.Handlers;
-using CleanHr.DepartmentApi.Application.Commands.DepartmentCommands;
+using CleanHr.DepartmentApi.Application.Commands;
 using CleanHr.DepartmentApi.Domain.Aggregates;
 using CleanHr.DepartmentApi.Domain.Exceptions;
 using Moq;

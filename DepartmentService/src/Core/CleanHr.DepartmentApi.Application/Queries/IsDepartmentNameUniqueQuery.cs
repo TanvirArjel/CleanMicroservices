@@ -3,7 +3,7 @@ using MediatR;
 using TanvirArjel.ArgumentChecker;
 using TanvirArjel.EFCore.GenericRepository;
 
-namespace CleanHr.DepartmentApi.Application.Queries.DepartmentQueries;
+namespace CleanHr.DepartmentApi.Application.Queries;
 
 public sealed class IsDepartmentNameUniqueQuery(Guid departmentId, string name) : IRequest<bool>
 {

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
 using CleanHr.DepartmentApi.Application.Caching.Repositories;
-using CleanHr.DepartmentApi.Application.Queries.DepartmentQueries;
+using CleanHr.DepartmentApi.Application.Queries;
 using CleanHr.DepartmentApi.Domain.Aggregates;
 using CleanHr.DepartmentApi.Persistence.Cache.Keys;
 using Microsoft.Extensions.Caching.Distributed;

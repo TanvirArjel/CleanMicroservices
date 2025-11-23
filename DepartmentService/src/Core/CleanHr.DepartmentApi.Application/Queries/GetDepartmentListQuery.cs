@@ -2,7 +2,7 @@
 using MediatR;
 using TanvirArjel.ArgumentChecker;
 
-namespace CleanHr.DepartmentApi.Application.Queries.DepartmentQueries;
+namespace CleanHr.DepartmentApi.Application.Queries;
 
 public sealed class GetDepartmentListQuery : IRequest<List<DepartmentDto>>
 {

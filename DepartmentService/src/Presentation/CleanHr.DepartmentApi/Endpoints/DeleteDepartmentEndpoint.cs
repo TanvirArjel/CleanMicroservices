@@ -1,4 +1,4 @@
-﻿using CleanHr.DepartmentApi.Application.Commands.DepartmentCommands;
+﻿using CleanHr.DepartmentApi.Application.Commands;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;

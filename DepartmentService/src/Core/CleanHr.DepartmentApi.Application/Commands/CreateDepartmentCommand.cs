@@ -4,7 +4,7 @@ using CleanHr.DepartmentApi.Domain.Aggregates;
 using MediatR;
 using TanvirArjel.ArgumentChecker;
 
-namespace CleanHr.DepartmentApi.Application.Commands.DepartmentCommands;
+namespace CleanHr.DepartmentApi.Application.Commands;
 
 public sealed record CreateDepartmentCommand(string Name, string Description) : IRequest<Result<Guid>>;
 

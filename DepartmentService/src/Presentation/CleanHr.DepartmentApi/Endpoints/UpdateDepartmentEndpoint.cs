@@ -1,5 +1,5 @@
 ﻿using CleanHr.DepartmentApi.Models;
-using CleanHr.DepartmentApi.Application.Commands.DepartmentCommands;
+using CleanHr.DepartmentApi.Application.Commands;
 using CleanHr.DepartmentApi.Domain;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;

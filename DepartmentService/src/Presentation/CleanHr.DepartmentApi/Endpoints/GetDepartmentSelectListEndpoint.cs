@@ -1,4 +1,4 @@
-﻿using CleanHr.DepartmentApi.Application.Queries.DepartmentQueries;
+﻿using CleanHr.DepartmentApi.Application.Queries;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;

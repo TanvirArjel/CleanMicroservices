@@ -4,7 +4,7 @@ using CleanHr.DepartmentApi.Domain.Exceptions;
 using MediatR;
 using TanvirArjel.ArgumentChecker;
 
-namespace CleanHr.DepartmentApi.Application.Commands.DepartmentCommands;
+namespace CleanHr.DepartmentApi.Application.Commands;
 
 public sealed class DeleteDepartmentCommand(Guid departmentId) : IRequest
 {

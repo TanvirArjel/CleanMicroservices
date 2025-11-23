@@ -1,4 +1,4 @@
-﻿using CleanHr.DepartmentApi.Application.Queries.DepartmentQueries;
+﻿using CleanHr.DepartmentApi.Application.Queries;
 using CleanHr.DepartmentApi.Domain.Aggregates;
 using TanvirArjel.Extensions.Microsoft.DependencyInjection;
 
