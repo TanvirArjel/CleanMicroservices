@@ -54,4 +54,7 @@
       <Visible Condition="'%(NuGetItemType)' == 'Content'">false</Visible>
     </Content>
   </ItemGroup>
+   <ItemGroup>
+     <Folder Include="Configs/" />
+   </ItemGroup>
 </Project>
