@@ -2,9 +2,8 @@
   <Folder Name="/Solution Items/">
     <File Path=".editorconfig" />
   </Folder>
-  <Folder Name="/src/" />
-  <Folder Name="/src/ClientApps/">
-    <Project Path="src/ClientApps/CleanHr.Blazor/CleanHr.Blazor.csproj" />
+  <Folder Name="/src/">
+    <Project Path="src/CleanHr.Blazor/CleanHr.Blazor.csproj" />
   </Folder>
 
 </Solution>
