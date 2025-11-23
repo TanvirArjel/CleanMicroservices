@@ -1,0 +1,22 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path=".editorconfig" />
+  </Folder>
+  <Folder Name="/src/" />
+  <Folder Name="/src/Core/">
+    <Project Path="src/Core/CleanHr.AuthApi.Application/CleanHr.AuthApi.Application.csproj" />
+    <Project Path="src/Core/CleanHr.AuthApi.Domain/CleanHr.AuthApi.Domain.csproj" />
+  </Folder>
+  <Folder Name="/src/Infrastructure/">
+    <Project Path="src/Infrastructure/CleanHr.AuthApi.Infrastructure.Services/CleanHr.AuthApi.Infrastructure.Services.csproj" />
+    <Project Path="src/Infrastructure/CleanHr.AuthApi.Persistence.Cache/CleanHr.AuthApi.Persistence.Cache.csproj" />
+    <Project Path="src/Infrastructure/CleanHr.AuthApi.Persistence.RelationalDB/CleanHr.AuthApi.Persistence.RelationalDB.csproj" />
+  </Folder>
+  <Folder Name="/src/Presentation/">
+    <Project Path="src/Presentation/CleanHr.AuthApi/CleanHr.AuthApi.csproj" />
+  </Folder>
+  <Folder Name="/test/">
+    <Project Path="test/CleanHr.Application.Tests/CleanHr.Application.Tests.csproj" />
+  </Folder>
+
+</Solution>
