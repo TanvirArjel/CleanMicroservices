@@ -3,24 +3,20 @@
     <File Path=".editorconfig" />
   </Folder>
   <Folder Name="/src/" />
-  <Folder Name="/src/ClientApps/">
-    <Project Path="src/ClientApps/CleanHr.Blazor/CleanHr.Blazor.csproj" />
+  <Folder Name="/src/Core/">
+    <Project Path="src/Core/CleanHr.DepartmentApi.Application/CleanHr.DepartmentApi.Application.csproj" />
+    <Project Path="src/Core/CleanHr.DepartmentApi.Domain/CleanHr.DepartmentApi.Domain.csproj" />
   </Folder>
-  <Folder Name="/src/ServerApp/" />
-  <Folder Name="/src/ServerApp/Core/">
-    <Project Path="src/ServerApp/Core/CleanHr.Application/CleanHr.Application.csproj" />
-    <Project Path="src/ServerApp/Core/CleanHr.Domain/CleanHr.Domain.csproj" />
+  <Folder Name="/src/Infrastructure/">
+    <Project Path="src/Infrastructure/CleanHr.DepartmentApi.Infrastructure.Services/CleanHr.DepartmentApi.Infrastructure.Services.csproj" />
+    <Project Path="src/Infrastructure/CleanHr.DepartmentApi.Persistence.Cache/CleanHr.DepartmentApi.Persistence.Cache.csproj" />
+    <Project Path="src/Infrastructure/CleanHr.DepartmentApi.Persistence.RelationalDB/CleanHr.DepartmentApi.Persistence.RelationalDB.csproj" />
   </Folder>
-  <Folder Name="/src/ServerApp/Infrastructure/">
-    <Project Path="src/ServerApp/Infrastructure/CleanHr.Infrastructure.Services/CleanHr.Infrastructure.Services.csproj" />
-    <Project Path="src/ServerApp/Infrastructure/CleanHr.Persistence.Cache/CleanHr.Persistence.Cache.csproj" />
-    <Project Path="src/ServerApp/Infrastructure/CleanHr.Persistence.RelationalDB/CleanHr.Persistence.RelationalDB.csproj" />
-  </Folder>
-  <Folder Name="/src/ServerApp/Presentation/">
-    <Project Path="src/ServerApp/Presentation/CleanHr.Api/CleanHr.Api.csproj" />
+  <Folder Name="/src/Presentation/">
+    <Project Path="src/Presentation/CleanHr.DepartmentApi/CleanHr.DepartmentApi.csproj" />
   </Folder>
   <Folder Name="/test/">
-    <Project Path="test/CleanHr.Application.Tests/CleanHr.Application.Tests.csproj" />
+    <Project Path="test/CleanHr.DepartmentApi.Application.Tests/CleanHr.DepartmentApi.Application.Tests.csproj" />
   </Folder>
 
 </Solution>
