@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace CleanHr.AuthApi.Persistence.RelationalDB.EntityConfigurations.IdentityAggregate;
+namespace CleanHr.AuthApi.Persistence.RelationalDB.EntityConfigurations;
 
 public class EmailVerificationCodeConfiguration : IEntityTypeConfiguration<EmailVerificationCode>
 {

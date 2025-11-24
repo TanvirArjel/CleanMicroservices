@@ -2,7 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace CleanHr.AuthApi.Persistence.RelationalDB.EntityConfigurations.IdentityAggregate;
+namespace CleanHr.AuthApi.Persistence.RelationalDB.EntityConfigurations;
 
 internal sealed class ApplicationUserConfiguration : IEntityTypeConfiguration<ApplicationUser>
 {
