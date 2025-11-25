@@ -162,14 +162,18 @@ public class JwtTokenManager
 
     public ClaimsPrincipal ParseExpiredToken(string accessToken)
     {
+#pragma warning disable CA5404 // Do not disable token validation checks
         TokenValidationParameters tokenValidationParameters = new()
         {
             ValidateAudience = true,
             ValidateIssuer = true,
             ValidateIssuerSigningKey = true,
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtConfig.Key)),
-            ValidateLifetime = true
+            // SECURITY: Set to false because we're explicitly parsing EXPIRED tokens during refresh flow
+            // The refresh token validation provides the security check, not the expired access token
+            ValidateLifetime = false
         };
+#pragma warning restore CA5404 // Do not disable token validation checks
 
         JwtSecurityTokenHandler tokenHandler = new();
         ClaimsPrincipal principal = tokenHandler.ValidateToken(accessToken, tokenValidationParameters, out SecurityToken securityToken);
