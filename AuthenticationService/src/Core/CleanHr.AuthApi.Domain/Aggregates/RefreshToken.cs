@@ -38,6 +38,8 @@ public class RefreshToken
 
     public DateTime? RevokedAtUtc { get; private set; }
 
+    public DateTime? UsedAtUtc { get; private set; }
+
     // Navigation properties
     public ApplicationUser ApplicationUser { get; private set; }
 
@@ -95,6 +97,17 @@ public class RefreshToken
 
     public bool IsValid()
     {
-        return !IsRevoked && DateTime.UtcNow <= ExpireAtUtc;
+        // Token is valid only if: not revoked AND not expired AND not used yet
+        return !IsRevoked && DateTime.UtcNow <= ExpireAtUtc && UsedAtUtc == null;
+    }
+
+    public void MarkAsUsed()
+    {
+        UsedAtUtc = DateTime.UtcNow;
+    }
+
+    public bool HasBeenUsed()
+    {
+        return UsedAtUtc.HasValue;
     }
 }

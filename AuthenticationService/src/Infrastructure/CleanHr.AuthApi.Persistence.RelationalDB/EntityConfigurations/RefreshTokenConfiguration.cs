@@ -25,6 +25,8 @@ public class RefreshTokenConfiguration : IEntityTypeConfiguration<RefreshToken>
 
         builder.Property(rt => rt.RevokedAtUtc);
 
+        builder.Property(rt => rt.UsedAtUtc);
+
         builder.Property(rt => rt.ExpireAtUtc)
             .IsRequired();
 
