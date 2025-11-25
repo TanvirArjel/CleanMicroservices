@@ -73,57 +73,43 @@ public class JwtTokenManager
 
         // SECURITY: Always rotate refresh token when used
         // This generates a new refresh token and invalidates the old one
-        return await GetTokenAsync(user, rotateRefreshToken: true);
+        return await GetTokenAsync(user, oldRefreshToken: refreshToken);
     }
 
-    public async Task<AuthenticationResult> GetTokenAsync(ApplicationUser user, bool rotateRefreshToken = false)
+    public async Task<AuthenticationResult> GetTokenAsync(ApplicationUser user, string oldRefreshToken = null)
     {
         ArgumentNullException.ThrowIfNull(user);
 
         IList<string> roles = await _userManager.GetRolesAsync(user).ConfigureAwait(false);
 
-        GetRefreshTokenQuery getRefreshTokenQuery = new(user.Id);
+        string newToken = GetRefreshToken();
+        RefreshToken refreshToken;
 
-        RefreshToken refreshToken = await _mediator.Send(getRefreshTokenQuery);
-
-        // Generate new refresh token if:
-        // 1. No refresh token exists
-        // 2. Existing token is expired
-        // 3. Token rotation is requested (during refresh flow)
-        bool shouldGenerateNewToken = refreshToken == null ||
-                                     refreshToken.ExpireAtUtc < DateTime.UtcNow ||
-                                     rotateRefreshToken;
-
-        if (shouldGenerateNewToken)
+        if (oldRefreshToken != null)
         {
-            string token = GetRefreshToken();
+            // Token rotation: revoke old token and create new one
+            UpdateRefreshTokenCommand updateRefreshTokenCommand = new(user.Id, oldRefreshToken, newToken);
+            Result<RefreshToken> updateResult = await _mediator.Send(updateRefreshTokenCommand);
 
-            if (refreshToken == null)
+            if (updateResult.IsSuccess == false)
             {
-                // Create new refresh token for first-time login
-                StoreRefreshTokenCommand storeRefreshTokenCommand = new(user.Id, token);
-                Result<RefreshToken> storeResult = await _mediator.Send(storeRefreshTokenCommand);
-
-                if (storeResult.IsSuccess == false)
-                {
-                    throw new InvalidOperationException("Failed to store refresh token.");
-                }
-
-                refreshToken = storeResult.Value;
+                throw new InvalidOperationException("Failed to rotate refresh token.");
             }
-            else
+
+            refreshToken = updateResult.Value;
+        }
+        else
+        {
+            // First-time login: create new refresh token
+            StoreRefreshTokenCommand storeRefreshTokenCommand = new(user.Id, newToken);
+            Result<RefreshToken> storeResult = await _mediator.Send(storeRefreshTokenCommand);
+
+            if (storeResult.IsSuccess == false)
             {
-                // Update existing refresh token (rotation or expiration)
-                UpdateRefreshTokenCommand updateRefreshTokenCommand = new(user.Id, token);
-                Result<RefreshToken> updateResult = await _mediator.Send(updateRefreshTokenCommand);
-
-                if (updateResult.IsSuccess == false)
-                {
-                    throw new InvalidOperationException("Failed to update refresh token.");
-                }
-
-                refreshToken = updateResult.Value;
+                throw new InvalidOperationException("Failed to store refresh token.");
             }
+
+            refreshToken = storeResult.Value;
         }
 
         DateTime utcNow = DateTime.Now;

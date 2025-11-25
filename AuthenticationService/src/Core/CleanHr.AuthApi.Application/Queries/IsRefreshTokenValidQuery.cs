@@ -20,7 +20,17 @@ internal class IsRefreshTokenValidQueryHandler(IRepository repository) : IReques
     {
         request.ThrowIfNull(nameof(request));
 
-        bool isRefreshTokenValid = await _repository.ExistsAsync<RefreshToken>(rt => rt.UserId == request.UserId && rt.Token == request.RefreshToken, cancellationToken);
+        RefreshToken refreshToken = await _repository.GetAsync<RefreshToken>(
+            rt => rt.UserId == request.UserId && rt.Token == request.RefreshToken,
+            cancellationToken);
+
+        if (refreshToken == null)
+        {
+            return false;
+        }
+
+        // Check if token is valid (not expired and not revoked)
+        bool isRefreshTokenValid = refreshToken.IsValid();
 
         return isRefreshTokenValid;
     }

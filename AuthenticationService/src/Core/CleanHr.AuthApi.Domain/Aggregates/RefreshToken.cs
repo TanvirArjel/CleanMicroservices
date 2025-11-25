@@ -10,10 +10,12 @@ public class RefreshToken
 {
     private RefreshToken(Guid userId, string token, int expirationDays = 30)
     {
+        Id = Guid.NewGuid();
         UserId = userId;
         Token = token?.Trim();
         CreatedAtUtc = DateTime.UtcNow;
         ExpireAtUtc = DateTime.UtcNow.AddDays(expirationDays);
+        IsRevoked = false;
     }
 
     // This is needed for EF Core query mapping
@@ -22,6 +24,8 @@ public class RefreshToken
     {
     }
 
+    public Guid Id { get; private set; }
+
     public Guid UserId { get; private set; }
 
     public string Token { get; private set; }
@@ -29,6 +33,10 @@ public class RefreshToken
     public DateTime CreatedAtUtc { get; private set; }
 
     public DateTime ExpireAtUtc { get; private set; }
+
+    public bool IsRevoked { get; private set; }
+
+    public DateTime? RevokedAtUtc { get; private set; }
 
     // Navigation properties
     public ApplicationUser ApplicationUser { get; private set; }
@@ -77,5 +85,16 @@ public class RefreshToken
     {
         bool isExpired = DateTime.UtcNow > ExpireAtUtc;
         return Result<bool>.Success(isExpired);
+    }
+
+    public void Revoke()
+    {
+        IsRevoked = true;
+        RevokedAtUtc = DateTime.UtcNow;
+    }
+
+    public bool IsValid()
+    {
+        return !IsRevoked && DateTime.UtcNow <= ExpireAtUtc;
     }
 }

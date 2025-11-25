@@ -6,11 +6,13 @@ using TanvirArjel.EFCore.GenericRepository;
 
 namespace CleanHr.AuthApi.Application.Commands;
 
-public sealed class UpdateRefreshTokenCommand(Guid userId, string token) : IRequest<Result<RefreshToken>>
+public sealed class UpdateRefreshTokenCommand(Guid userId, string oldToken, string newToken) : IRequest<Result<RefreshToken>>
 {
     public Guid UserId { get; } = userId.ThrowIfEmpty(nameof(userId));
 
-    public string Token { get; } = token.ThrowIfNullOrEmpty(nameof(token));
+    public string OldToken { get; } = oldToken.ThrowIfNullOrEmpty(nameof(oldToken));
+
+    public string NewToken { get; } = newToken.ThrowIfNullOrEmpty(nameof(newToken));
 }
 
 internal class UpdateRefreshTokenCommandHandler(IRepository repository) : IRequestHandler<UpdateRefreshTokenCommand, Result<RefreshToken>>
@@ -21,23 +23,33 @@ internal class UpdateRefreshTokenCommandHandler(IRepository repository) : IReque
     {
         request.ThrowIfNull(nameof(request));
 
-        RefreshToken refreshTokenToBeUpdated = await _repository.GetAsync<RefreshToken>(rt => rt.UserId == request.UserId, cancellationToken);
+        // Find the old refresh token
+        RefreshToken oldRefreshToken = await _repository.GetAsync<RefreshToken>(
+            rt => rt.UserId == request.UserId && rt.Token == request.OldToken,
+            cancellationToken);
 
-        if (refreshTokenToBeUpdated == null)
+        if (oldRefreshToken == null)
         {
-            return Result<RefreshToken>.Failure($"The RefreshToken does not exist with id value: {request.UserId}.");
+            return Result<RefreshToken>.Failure($"The RefreshToken does not exist for user: {request.UserId}.");
         }
 
-        Result updateResult = refreshTokenToBeUpdated.UpdateToken(request.Token);
+        // Revoke the old token
+        oldRefreshToken.Revoke();
+        _repository.Update(oldRefreshToken);
 
-        if (updateResult.IsSuccess == false)
+        // Create new refresh token
+        Result<RefreshToken> createResult = await RefreshToken.CreateAsync(request.UserId, request.NewToken);
+
+        if (createResult.IsSuccess == false)
         {
-            return Result<RefreshToken>.Failure(updateResult.Errors);
+            return createResult;
         }
 
-        _repository.Update(refreshTokenToBeUpdated);
+        RefreshToken newRefreshToken = createResult.Value;
+        _repository.Add(newRefreshToken);
+
         await _repository.SaveChangesAsync(cancellationToken);
 
-        return Result<RefreshToken>.Success(refreshTokenToBeUpdated);
+        return Result<RefreshToken>.Success(newRefreshToken);
     }
 }
