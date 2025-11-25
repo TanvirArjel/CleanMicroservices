@@ -8,11 +8,12 @@ namespace CleanHr.AuthApi.Domain.Aggregates;
 
 public class RefreshToken
 {
-    private RefreshToken(Guid userId, string token, int expirationDays = 30)
+    private RefreshToken(Guid userId, string token, Guid? tokenFamilyId = null, int expirationDays = 30)
     {
         Id = Guid.NewGuid();
         UserId = userId;
         Token = token?.Trim();
+        TokenFamilyId = tokenFamilyId ?? Guid.NewGuid(); // New family if not provided
         CreatedAtUtc = DateTime.UtcNow;
         ExpireAtUtc = DateTime.UtcNow.AddDays(expirationDays);
         IsRevoked = false;
@@ -27,6 +28,8 @@ public class RefreshToken
     public Guid Id { get; private set; }
 
     public Guid UserId { get; private set; }
+
+    public Guid TokenFamilyId { get; private set; }
 
     public string Token { get; private set; }
 
@@ -48,16 +51,18 @@ public class RefreshToken
     /// </summary>
     /// <param name="userId">The user identifier.</param>
     /// <param name="token">The refresh token.</param>
+    /// <param name="tokenFamilyId">Optional token family ID. If null, creates new family (new device/session).</param>
     /// <param name="expirationDays">Number of days until expiration (default 30).</param>
     /// <returns>Returns <see cref="Task{TResult}"/>.</returns>
     public static async Task<Result<RefreshToken>> CreateAsync(
         Guid userId,
         string token,
+        Guid? tokenFamilyId = null,
         int expirationDays = 30)
     {
         RefreshTokenValidator validator = new();
 
-        RefreshToken refreshToken = new(userId, token, expirationDays);
+        RefreshToken refreshToken = new(userId, token, tokenFamilyId, expirationDays);
 
         ValidationResult validationResult = await validator.ValidateAsync(refreshToken);
 

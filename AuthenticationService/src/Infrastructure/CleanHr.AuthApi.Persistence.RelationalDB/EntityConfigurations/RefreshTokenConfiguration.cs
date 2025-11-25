@@ -15,6 +15,9 @@ public class RefreshTokenConfiguration : IEntityTypeConfiguration<RefreshToken>
         builder.Property(rt => rt.UserId)
             .IsRequired();
 
+        builder.Property(rt => rt.TokenFamilyId)
+            .IsRequired();
+
         builder.Property(rt => rt.Token)
             .IsRequired()
             .HasMaxLength(500);
@@ -35,6 +38,8 @@ public class RefreshTokenConfiguration : IEntityTypeConfiguration<RefreshToken>
 
         builder.HasIndex(rt => new { rt.UserId, rt.Token })
             .IsUnique();
+
+        builder.HasIndex(rt => rt.TokenFamilyId);
 
         builder.HasOne(rt => rt.ApplicationUser)
             .WithMany(au => au.RefreshTokens)

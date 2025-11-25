@@ -35,22 +35,23 @@ internal class UpdateRefreshTokenCommandHandler(IRepository repository, ILogger<
             return Result<RefreshToken>.Failure($"The RefreshToken does not exist for user: {request.UserId}.");
         }
 
-        // SECURITY: Detect token reuse attack
-        // If token has already been used, this is a security breach - revoke ALL user tokens
+        // SECURITY: Detect token reuse attack with device isolation
+        // If token has already been used, this is a security breach - revoke only this device's token family
         if (oldRefreshToken.HasBeenUsed())
         {
             _logger.LogWarning(
-                "SECURITY ALERT: Refresh token reuse detected for user {UserId}. Token {TokenId} was already used at {UsedAt}. Revoking all tokens.",
+                "SECURITY ALERT: Refresh token reuse detected for user {UserId}. Token {TokenId} (Family: {TokenFamilyId}) was already used at {UsedAt}. Revoking token family.",
                 request.UserId,
                 oldRefreshToken.Id,
+                oldRefreshToken.TokenFamilyId,
                 oldRefreshToken.UsedAtUtc);
 
-            // Revoke all tokens for this user
-            List<RefreshToken> allUserTokens = await _repository.GetListAsync<RefreshToken>(
-                rt => rt.UserId == request.UserId && !rt.IsRevoked,
+            // Revoke only tokens in the same family (device isolation - don't affect other devices)
+            List<RefreshToken> familyTokens = await _repository.GetListAsync<RefreshToken>(
+                rt => rt.TokenFamilyId == oldRefreshToken.TokenFamilyId && !rt.IsRevoked,
                 cancellationToken);
 
-            foreach (RefreshToken token in allUserTokens)
+            foreach (RefreshToken token in familyTokens)
             {
                 token.Revoke();
                 _repository.Update(token);
@@ -58,7 +59,7 @@ internal class UpdateRefreshTokenCommandHandler(IRepository repository, ILogger<
 
             await _repository.SaveChangesAsync(cancellationToken);
 
-            return Result<RefreshToken>.Failure("Token reuse detected. All tokens have been revoked for security. Please login again.");
+            return Result<RefreshToken>.Failure("Token reuse detected. This device's session has been revoked for security. Please login again.");
         }
 
         // Mark old token as used (one-time use enforcement)
@@ -68,8 +69,11 @@ internal class UpdateRefreshTokenCommandHandler(IRepository repository, ILogger<
         oldRefreshToken.Revoke();
         _repository.Update(oldRefreshToken);
 
-        // Create new refresh token
-        Result<RefreshToken> createResult = await RefreshToken.CreateAsync(request.UserId, request.NewToken);
+        // Create new refresh token in the SAME family (token rotation within device/session)
+        Result<RefreshToken> createResult = await RefreshToken.CreateAsync(
+            request.UserId,
+            request.NewToken,
+            oldRefreshToken.TokenFamilyId); // Inherit family ID for rotation chain
 
         if (createResult.IsSuccess == false)
         {
