@@ -19,7 +19,7 @@ internal static class SerilogConfiguration
             .Enrich.WithEnvironmentName()
             .Enrich.WithMachineName()
             .Enrich.WithThreadId()
-            .Enrich.WithProperty("Application", "CleanHrApi")
+            .Enrich.WithProperty("Application", "AuthenticationService")
             .WriteTo.Console(
                 outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj} {Properties:j}{NewLine}{Exception}",
                 formatProvider: CultureInfo.InvariantCulture)
@@ -27,7 +27,7 @@ internal static class SerilogConfiguration
                 "http://localhost:3100",
                 labels: new List<LokiLabel>
                 {
-                    new LokiLabel { Key = "app", Value = "cleanhr-api" },
+                    new LokiLabel { Key = "app", Value = "authentication-service" },
                     new LokiLabel { Key = "environment", Value = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production" }
                 })
             .CreateLogger();

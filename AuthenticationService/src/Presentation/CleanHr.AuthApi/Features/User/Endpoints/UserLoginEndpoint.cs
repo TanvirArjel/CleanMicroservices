@@ -31,12 +31,12 @@ public class UserLoginEndpoint : UserEndpointBase
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     [ProducesDefaultResponseType]
     [SwaggerOperation(Summary = "Post the required credentials to get the access token for the login.")]
-    public async Task<ActionResult<string>> Post(LoginModel loginModel)
+    public async Task<ActionResult<AuthenticationResponse>> Post(LoginModel loginModel)
     {
         try
         {
             LoginUserCommand command = new(loginModel.EmailOrUserName, loginModel.Password, loginModel.RememberMe);
-            Result<string> result = await _mediator.Send(command);
+            Result<CleanHr.AuthApi.Application.Services.AuthenticationResult> result = await _mediator.Send(command);
 
             if (result.IsSuccess == false)
             {
@@ -48,8 +48,15 @@ public class UserLoginEndpoint : UserEndpointBase
                 return ValidationProblem(ModelState);
             }
 
-            string jsonWebToken = result.Value;
-            return Ok(jsonWebToken);
+            AuthenticationResponse response = new()
+            {
+                AccessToken = result.Value.AccessToken,
+                RefreshToken = result.Value.RefreshToken,
+                ExpiresIn = result.Value.ExpiresIn,
+                TokenType = "Bearer"
+            };
+
+            return Ok(response);
         }
         catch (Exception exception)
         {

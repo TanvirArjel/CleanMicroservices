@@ -8,7 +8,7 @@ using TanvirArjel.EFCore.GenericRepository;
 
 namespace CleanHr.AuthApi.Application.Commands;
 
-public sealed class LoginUserCommand(string emailOrUserName, string password, bool rememberMe) : IRequest<Result<string>>
+public sealed class LoginUserCommand(string emailOrUserName, string password, bool rememberMe) : IRequest<Result<AuthenticationResult>>
 {
     public string EmailOrUserName { get; } = emailOrUserName.ThrowIfNullOrEmpty(nameof(emailOrUserName));
 
@@ -17,7 +17,7 @@ public sealed class LoginUserCommand(string emailOrUserName, string password, bo
     public bool RememberMe { get; } = rememberMe;
 }
 
-internal class LoginUserCommandHandler : IRequestHandler<LoginUserCommand, Result<string>>
+internal class LoginUserCommandHandler : IRequestHandler<LoginUserCommand, Result<AuthenticationResult>>
 {
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly SignInManager<ApplicationUser> _signInManager;
@@ -36,7 +36,7 @@ internal class LoginUserCommandHandler : IRequestHandler<LoginUserCommand, Resul
         _jwtTokenManager = jwtTokenManager ?? throw new ArgumentNullException(nameof(jwtTokenManager));
     }
 
-    public async Task<Result<string>> Handle(LoginUserCommand request, CancellationToken cancellationToken)
+    public async Task<Result<AuthenticationResult>> Handle(LoginUserCommand request, CancellationToken cancellationToken)
     {
         request.ThrowIfNull(nameof(request));
 
@@ -46,7 +46,7 @@ internal class LoginUserCommandHandler : IRequestHandler<LoginUserCommand, Resul
 
         if (applicationUser == null)
         {
-            return Result<string>.Failure("EmailOrUserName", "The email or username does not exist.");
+            return Result<AuthenticationResult>.Failure("EmailOrUserName", "The email or username does not exist.");
         }
 
         Microsoft.AspNetCore.Identity.SignInResult signInResult = await _signInManager.PasswordSignInAsync(
@@ -63,35 +63,35 @@ internal class LoginUserCommandHandler : IRequestHandler<LoginUserCommand, Resul
             await _repository.SaveChangesAsync(cancellationToken);
 
             // Generate JWT token
-            string jsonWebToken = await _jwtTokenManager.GetTokenAsync(applicationUser.Id.ToString());
-            return Result<string>.Success(jsonWebToken);
+            AuthenticationResult authResult = await _jwtTokenManager.GetTokenAsync(applicationUser.Id.ToString());
+            return Result<AuthenticationResult>.Success(authResult);
         }
 
         if (signInResult.IsNotAllowed)
         {
             if (!await _userManager.IsEmailConfirmedAsync(applicationUser))
             {
-                return Result<string>.Failure("EmailOrUserName", "The email is not confirmed yet.");
+                return Result<AuthenticationResult>.Failure("EmailOrUserName", "The email is not confirmed yet.");
             }
 
             if (!await _userManager.IsPhoneNumberConfirmedAsync(applicationUser))
             {
-                return Result<string>.Failure(string.Empty, "The phone number is not confirmed yet.");
+                return Result<AuthenticationResult>.Failure(string.Empty, "The phone number is not confirmed yet.");
             }
         }
         else if (signInResult.IsLockedOut)
         {
-            return Result<string>.Failure(string.Empty, "The account is locked.");
+            return Result<AuthenticationResult>.Failure(string.Empty, "The account is locked.");
         }
         else if (signInResult.RequiresTwoFactor)
         {
-            return Result<string>.Failure(string.Empty, "Require two factor authentication.");
+            return Result<AuthenticationResult>.Failure(string.Empty, "Require two factor authentication.");
         }
         else
         {
-            return Result<string>.Failure("Password", "Password is incorrect.");
+            return Result<AuthenticationResult>.Failure("Password", "Password is incorrect.");
         }
 
-        return Result<string>.Failure(string.Empty, "Login failed.");
+        return Result<AuthenticationResult>.Failure(string.Empty, "Login failed.");
     }
 }

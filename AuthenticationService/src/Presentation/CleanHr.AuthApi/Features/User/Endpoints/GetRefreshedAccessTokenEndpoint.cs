@@ -16,9 +16,18 @@ public class GetRefreshedAccessTokenEndpoint(
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesDefaultResponseType]
     [SwaggerOperation(Summary = "Get a new access token for user by posting user's expired access token and refresh token.")]
-    public async Task<ActionResult<string>> Post(TokenRefreshModel model)
+    public async Task<ActionResult<AuthenticationResponse>> Post(TokenRefreshModel model)
     {
-        string jsonWebToken = await tokenManager.GetTokenAsync(model.AccessToken, model.RefreshToken);
-        return Ok(jsonWebToken);
+        AuthenticationResult result = await tokenManager.GetTokenAsync(model.AccessToken, model.RefreshToken);
+
+        AuthenticationResponse response = new()
+        {
+            AccessToken = result.AccessToken,
+            RefreshToken = result.RefreshToken,
+            ExpiresIn = result.ExpiresIn,
+            TokenType = "Bearer"
+        };
+
+        return Ok(response);
     }
 }

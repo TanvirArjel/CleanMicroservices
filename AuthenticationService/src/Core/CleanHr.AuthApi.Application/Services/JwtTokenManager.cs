@@ -16,6 +16,13 @@ using TanvirArjel.ArgumentChecker;
 
 namespace CleanHr.AuthApi.Application.Services;
 
+public class AuthenticationResult
+{
+    public string AccessToken { get; set; }
+    public string RefreshToken { get; set; }
+    public int ExpiresIn { get; set; }
+}
+
 public class JwtTokenManager
 {
     private readonly JwtConfig _jwtConfig;
@@ -32,7 +39,7 @@ public class JwtTokenManager
         _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
     }
 
-    public async Task<string> GetTokenAsync(string userId)
+    public async Task<AuthenticationResult> GetTokenAsync(string userId)
     {
         userId.ThrowIfNullOrEmpty(nameof(userId));
 
@@ -46,7 +53,7 @@ public class JwtTokenManager
         return await GetTokenAsync(user);
     }
 
-    public async Task<string> GetTokenAsync(string accessToken, string refreshToken)
+    public async Task<AuthenticationResult> GetTokenAsync(string accessToken, string refreshToken)
     {
         accessToken.ThrowIfNull(nameof(accessToken));
 
@@ -57,11 +64,19 @@ public class JwtTokenManager
 
         bool isValid = await _mediator.Send(isRefreshTokenValidQuery);
 
+        if (!isValid)
+        {
+            throw new SecurityTokenException("Invalid refresh token.");
+        }
+
         ApplicationUser user = await _userManager.FindByIdAsync(userId);
-        return await GetTokenAsync(user);
+
+        // SECURITY: Always rotate refresh token when used
+        // This generates a new refresh token and invalidates the old one
+        return await GetTokenAsync(user, rotateRefreshToken: true);
     }
 
-    public async Task<string> GetTokenAsync(ApplicationUser user)
+    public async Task<AuthenticationResult> GetTokenAsync(ApplicationUser user, bool rotateRefreshToken = false)
     {
         ArgumentNullException.ThrowIfNull(user);
 
@@ -71,24 +86,34 @@ public class JwtTokenManager
 
         RefreshToken refreshToken = await _mediator.Send(getRefreshTokenQuery);
 
-        if (refreshToken == null)
+        // Generate new refresh token if:
+        // 1. No refresh token exists
+        // 2. Existing token is expired
+        // 3. Token rotation is requested (during refresh flow)
+        bool shouldGenerateNewToken = refreshToken == null ||
+                                     refreshToken.ExpireAtUtc < DateTime.UtcNow ||
+                                     rotateRefreshToken;
+
+        if (shouldGenerateNewToken)
         {
             string token = GetRefreshToken();
-            StoreRefreshTokenCommand storeRefreshTokenCommand = new(user.Id, token);
-            Result<RefreshToken> storeResult = await _mediator.Send(storeRefreshTokenCommand);
 
-            if (storeResult.IsSuccess == false)
+            if (refreshToken == null)
             {
-                throw new InvalidOperationException("Failed to store refresh token.");
+                // Create new refresh token for first-time login
+                StoreRefreshTokenCommand storeRefreshTokenCommand = new(user.Id, token);
+                Result<RefreshToken> storeResult = await _mediator.Send(storeRefreshTokenCommand);
+
+                if (storeResult.IsSuccess == false)
+                {
+                    throw new InvalidOperationException("Failed to store refresh token.");
+                }
+
+                refreshToken = storeResult.Value;
             }
-
-            refreshToken = storeResult.Value;
-        }
-        else
-        {
-            if (refreshToken.ExpireAtUtc < DateTime.UtcNow)
+            else
             {
-                string token = GetRefreshToken();
+                // Update existing refresh token (rotation or expiration)
                 UpdateRefreshTokenCommand updateRefreshTokenCommand = new(user.Id, token);
                 Result<RefreshToken> updateResult = await _mediator.Send(updateRefreshTokenCommand);
 
@@ -116,7 +141,6 @@ public class JwtTokenManager
             new Claim(JwtRegisteredClaimNames.GivenName, fullName),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
             new Claim(JwtRegisteredClaimNames.Iat, utcNow.ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture)),
-            new Claim("rt", refreshToken.Token),
         ];
 
         if (roles != null && roles.Any())
@@ -142,7 +166,12 @@ public class JwtTokenManager
         jwtSecurityTokenHandler.OutboundClaimTypeMap.Clear();
         string newAccessToken = jwtSecurityTokenHandler.WriteToken(jwt);
 
-        return newAccessToken;
+        return new AuthenticationResult
+        {
+            AccessToken = newAccessToken,
+            RefreshToken = refreshToken.Token,
+            ExpiresIn = _jwtConfig.TokenLifeTime
+        };
     }
 
     public ClaimsPrincipal ParseExpiredToken(string accessToken)
