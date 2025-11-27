@@ -8,7 +8,7 @@ namespace CleanHr.AuthApi.Domain.Validators;
 
 public class EmailValidator : AbstractValidator<string>
 {
-    public EmailValidator(Guid userId = default, IApplicationUserRepository userRepository = null)
+    public EmailValidator(Guid userId, IApplicationUserRepository userRepository)
     {
         RuleFor(email => email)
             .NotEmpty()
@@ -16,14 +16,9 @@ public class EmailValidator : AbstractValidator<string>
             .EmailAddress()
             .WithMessage("The Email is not a valid email.")
             .MaximumLength(50)
-            .WithMessage("The Email can't be more than 50 characters long.");
-
-        if (userRepository != null)
-        {
-            RuleFor(email => email)
-                .MustAsync((email, cancellationToken) => BeUniqueEmailAsync(email, userId, userRepository, cancellationToken))
-                .WithMessage("A user already exists with the provided email.");
-        }
+            .WithMessage("The Email can't be more than 50 characters long.")
+            .MustAsync((email, cancellationToken) => BeUniqueEmailAsync(email, userId, userRepository, cancellationToken))
+            .WithMessage("A user already exists with the provided email.");
     }
 
     private static async Task<bool> BeUniqueEmailAsync(

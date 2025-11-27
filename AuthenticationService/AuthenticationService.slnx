@@ -17,6 +17,7 @@
   </Folder>
   <Folder Name="/test/">
     <Project Path="test/CleanHr.Application.Tests/CleanHr.Application.Tests.csproj" />
+    <Project Path="test/CleanHr.AuthApi.Domain.Tests/CleanHr.AuthApi.Domain.Tests.csproj" />
   </Folder>
 
 </Solution>

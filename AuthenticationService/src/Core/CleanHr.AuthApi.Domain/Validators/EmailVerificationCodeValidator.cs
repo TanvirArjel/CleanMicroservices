@@ -15,7 +15,6 @@ public class EmailVerificationCodeValidator : AbstractValidator<EmailVerificatio
         _userManager = userManager;
 
         RuleFor(e => e.Email)
-            .SetValidator(new EmailValidator())
             .CustomAsync(ValidateEmailAsync);
 
         RuleFor(e => e.Code)

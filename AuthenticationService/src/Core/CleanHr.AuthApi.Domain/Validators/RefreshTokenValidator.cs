@@ -21,7 +21,7 @@ public class RefreshTokenValidator : AbstractValidator<RefreshToken>
         RuleFor(rt => rt.CreatedAtUtc)
             .NotEmpty()
             .WithMessage("The CreatedAtUtc is required.")
-            .LessThanOrEqualTo(DateTime.UtcNow)
+            .LessThanOrEqualTo(_ => DateTime.UtcNow)
             .WithMessage("The CreatedAtUtc cannot be a future date.");
 
         RuleFor(rt => rt.ExpireAtUtc)

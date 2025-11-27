@@ -9,7 +9,12 @@ public class PasswordResetCodeValidator : AbstractValidator<PasswordResetCode>
     public PasswordResetCodeValidator()
     {
         RuleFor(p => p.Email)
-            .SetValidator(new EmailValidator());
+            .NotEmpty()
+            .WithMessage("The Email is required.")
+            .EmailAddress()
+            .WithMessage("The Email is not a valid email.")
+            .MaximumLength(50)
+            .WithMessage("The Email can't be more than 50 characters long.");
 
         RuleFor(p => p.Code)
             .NotEmpty()
@@ -22,7 +27,7 @@ public class PasswordResetCodeValidator : AbstractValidator<PasswordResetCode>
         RuleFor(p => p.SentAtUtc)
             .NotEmpty()
             .WithMessage("The SentAtUtc is required.")
-            .LessThanOrEqualTo(DateTime.UtcNow)
+            .LessThanOrEqualTo(_ => DateTime.UtcNow)
             .WithMessage("The SentAtUtc cannot be in the future.");
     }
 }
