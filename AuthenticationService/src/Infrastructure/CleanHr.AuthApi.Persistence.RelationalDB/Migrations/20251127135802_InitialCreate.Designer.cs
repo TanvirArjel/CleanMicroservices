@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CleanHr.AuthApi.Persistence.RelationalDB.Migrations
 {
     [DbContext(typeof(CleanHrDbContext))]
-    [Migration("20251127133155_InitialCreate")]
+    [Migration("20251127135802_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -25,7 +25,7 @@ namespace CleanHr.AuthApi.Persistence.RelationalDB.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("CleanHr.AuthApi.Domain.Aggregates.ApplicationRole", b =>
+            modelBuilder.Entity("CleanHr.AuthApi.Domain.Models.ApplicationRole", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -53,7 +53,7 @@ namespace CleanHr.AuthApi.Persistence.RelationalDB.Migrations
                     b.ToTable("AspNetRoles", (string)null);
                 });
 
-            modelBuilder.Entity("CleanHr.AuthApi.Domain.Aggregates.ApplicationUser", b =>
+            modelBuilder.Entity("CleanHr.AuthApi.Domain.Models.ApplicationUser", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -139,7 +139,7 @@ namespace CleanHr.AuthApi.Persistence.RelationalDB.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
-            modelBuilder.Entity("CleanHr.AuthApi.Domain.Aggregates.EmailVerificationCode", b =>
+            modelBuilder.Entity("CleanHr.AuthApi.Domain.Models.EmailVerificationCode", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -167,7 +167,7 @@ namespace CleanHr.AuthApi.Persistence.RelationalDB.Migrations
                     b.ToTable("EmailVerificationCodes", (string)null);
                 });
 
-            modelBuilder.Entity("CleanHr.AuthApi.Domain.Aggregates.PasswordResetCode", b =>
+            modelBuilder.Entity("CleanHr.AuthApi.Domain.Models.PasswordResetCode", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -195,7 +195,7 @@ namespace CleanHr.AuthApi.Persistence.RelationalDB.Migrations
                     b.ToTable("PasswordResetCodes", (string)null);
                 });
 
-            modelBuilder.Entity("CleanHr.AuthApi.Domain.Aggregates.RefreshToken", b =>
+            modelBuilder.Entity("CleanHr.AuthApi.Domain.Models.RefreshToken", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -208,11 +208,6 @@ namespace CleanHr.AuthApi.Persistence.RelationalDB.Migrations
 
                     b.Property<DateTime>("ExpireAtUtc")
                         .HasColumnType("datetime2");
-
-                    b.Property<bool>("IsRevoked")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bit")
-                        .HasDefaultValue(false);
 
                     b.Property<DateTime?>("RevokedAtUtc")
                         .HasColumnType("datetime2");
@@ -241,7 +236,7 @@ namespace CleanHr.AuthApi.Persistence.RelationalDB.Migrations
                     b.ToTable("RefreshTokens", (string)null);
                 });
 
-            modelBuilder.Entity("CleanHr.AuthApi.Domain.Aggregates.UserOldPassword", b =>
+            modelBuilder.Entity("CleanHr.AuthApi.Domain.Models.UserOldPassword", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -368,9 +363,9 @@ namespace CleanHr.AuthApi.Persistence.RelationalDB.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
-            modelBuilder.Entity("CleanHr.AuthApi.Domain.Aggregates.RefreshToken", b =>
+            modelBuilder.Entity("CleanHr.AuthApi.Domain.Models.RefreshToken", b =>
                 {
-                    b.HasOne("CleanHr.AuthApi.Domain.Aggregates.ApplicationUser", "ApplicationUser")
+                    b.HasOne("CleanHr.AuthApi.Domain.Models.ApplicationUser", "ApplicationUser")
                         .WithMany("RefreshTokens")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -379,9 +374,9 @@ namespace CleanHr.AuthApi.Persistence.RelationalDB.Migrations
                     b.Navigation("ApplicationUser");
                 });
 
-            modelBuilder.Entity("CleanHr.AuthApi.Domain.Aggregates.UserOldPassword", b =>
+            modelBuilder.Entity("CleanHr.AuthApi.Domain.Models.UserOldPassword", b =>
                 {
-                    b.HasOne("CleanHr.AuthApi.Domain.Aggregates.ApplicationUser", "User")
+                    b.HasOne("CleanHr.AuthApi.Domain.Models.ApplicationUser", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -392,7 +387,7 @@ namespace CleanHr.AuthApi.Persistence.RelationalDB.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>
                 {
-                    b.HasOne("CleanHr.AuthApi.Domain.Aggregates.ApplicationRole", null)
+                    b.HasOne("CleanHr.AuthApi.Domain.Models.ApplicationRole", null)
                         .WithMany()
                         .HasForeignKey("RoleId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -401,7 +396,7 @@ namespace CleanHr.AuthApi.Persistence.RelationalDB.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<System.Guid>", b =>
                 {
-                    b.HasOne("CleanHr.AuthApi.Domain.Aggregates.ApplicationUser", null)
+                    b.HasOne("CleanHr.AuthApi.Domain.Models.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -410,7 +405,7 @@ namespace CleanHr.AuthApi.Persistence.RelationalDB.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<System.Guid>", b =>
                 {
-                    b.HasOne("CleanHr.AuthApi.Domain.Aggregates.ApplicationUser", null)
+                    b.HasOne("CleanHr.AuthApi.Domain.Models.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -419,13 +414,13 @@ namespace CleanHr.AuthApi.Persistence.RelationalDB.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<System.Guid>", b =>
                 {
-                    b.HasOne("CleanHr.AuthApi.Domain.Aggregates.ApplicationRole", null)
+                    b.HasOne("CleanHr.AuthApi.Domain.Models.ApplicationRole", null)
                         .WithMany()
                         .HasForeignKey("RoleId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("CleanHr.AuthApi.Domain.Aggregates.ApplicationUser", null)
+                    b.HasOne("CleanHr.AuthApi.Domain.Models.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -434,14 +429,14 @@ namespace CleanHr.AuthApi.Persistence.RelationalDB.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<System.Guid>", b =>
                 {
-                    b.HasOne("CleanHr.AuthApi.Domain.Aggregates.ApplicationUser", null)
+                    b.HasOne("CleanHr.AuthApi.Domain.Models.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("CleanHr.AuthApi.Domain.Aggregates.ApplicationUser", b =>
+            modelBuilder.Entity("CleanHr.AuthApi.Domain.Models.ApplicationUser", b =>
                 {
                     b.Navigation("RefreshTokens");
                 });

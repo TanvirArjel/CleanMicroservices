@@ -2,7 +2,8 @@ using System;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
-using CleanHr.AuthApi.Domain.Aggregates;
+using CleanHr.AuthApi.Domain.Models;
+using CleanHr.AuthApi.Domain.Repositories;
 using Microsoft.EntityFrameworkCore;
 using TanvirArjel.Extensions.Microsoft.DependencyInjection;
 

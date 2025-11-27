@@ -1,5 +1,6 @@
 ﻿using System;
-using CleanHr.AuthApi.Domain.Aggregates;
+using CleanHr.AuthApi.Domain.Models;
+using CleanHr.AuthApi.Domain.Repositories;
 using CleanHr.AuthApi.Persistence.RelationalDB.Repositories;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;

@@ -1,5 +1,6 @@
 ﻿using System.Threading.Tasks;
-using CleanHr.AuthApi.Domain.Aggregates;
+using CleanHr.AuthApi.Domain.Models;
+using CleanHr.AuthApi.Domain.Repositories;
 using CleanHr.AuthApi.Persistence.RelationalDB.SeedData;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Identity;

@@ -1,4 +1,4 @@
-﻿using CleanHr.AuthApi.Domain.Aggregates;
+﻿using CleanHr.AuthApi.Domain.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -21,10 +21,6 @@ public class RefreshTokenConfiguration : IEntityTypeConfiguration<RefreshToken>
         builder.Property(rt => rt.Token)
             .IsRequired()
             .HasMaxLength(500);
-
-        builder.Property(rt => rt.IsRevoked)
-            .IsRequired()
-            .HasDefaultValue(false);
 
         builder.Property(rt => rt.RevokedAtUtc);
 

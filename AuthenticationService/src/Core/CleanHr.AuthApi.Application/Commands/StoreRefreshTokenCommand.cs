@@ -1,5 +1,5 @@
 ﻿using CleanHr.AuthApi.Domain;
-using CleanHr.AuthApi.Domain.Aggregates;
+using CleanHr.AuthApi.Domain.Models;
 using MediatR;
 using TanvirArjel.ArgumentChecker;
 using TanvirArjel.EFCore.GenericRepository;

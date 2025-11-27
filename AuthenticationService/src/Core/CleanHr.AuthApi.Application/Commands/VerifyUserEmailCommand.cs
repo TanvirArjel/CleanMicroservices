@@ -1,6 +1,6 @@
 ﻿using System.Data;
 using CleanHr.AuthApi.Domain;
-using CleanHr.AuthApi.Domain.Aggregates;
+using CleanHr.AuthApi.Domain.Models;
 using MediatR;
 using Microsoft.EntityFrameworkCore.Storage;
 using TanvirArjel.ArgumentChecker;

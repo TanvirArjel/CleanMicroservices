@@ -1,6 +1,7 @@
 using System.Linq;
 using CleanHr.AuthApi.Domain;
-using CleanHr.AuthApi.Domain.Aggregates;
+using CleanHr.AuthApi.Domain.Models;
+using CleanHr.AuthApi.Domain.Repositories;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
 using TanvirArjel.ArgumentChecker;

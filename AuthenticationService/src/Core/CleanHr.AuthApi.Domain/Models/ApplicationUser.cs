@@ -2,11 +2,12 @@
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
-using CleanHr.AuthApi.Domain.Aggregates.Validators;
+using CleanHr.AuthApi.Domain.Repositories;
+using CleanHr.AuthApi.Domain.Validators;
 using FluentValidation.Results;
 using Microsoft.AspNetCore.Identity;
 
-namespace CleanHr.AuthApi.Domain.Aggregates;
+namespace CleanHr.AuthApi.Domain.Models;
 
 public class ApplicationUser : IdentityUser<Guid>
 {

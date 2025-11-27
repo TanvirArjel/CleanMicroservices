@@ -1,4 +1,4 @@
-﻿using CleanHr.AuthApi.Domain.Aggregates;
+﻿using CleanHr.AuthApi.Domain.Models;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;

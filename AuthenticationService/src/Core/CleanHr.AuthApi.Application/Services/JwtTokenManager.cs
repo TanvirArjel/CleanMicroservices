@@ -8,7 +8,7 @@ using CleanHr.AuthApi.Application.Commands;
 using CleanHr.AuthApi.Application.Infrastructures;
 using CleanHr.AuthApi.Application.Queries;
 using CleanHr.AuthApi.Domain;
-using CleanHr.AuthApi.Domain.Aggregates;
+using CleanHr.AuthApi.Domain.Models;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;

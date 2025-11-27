@@ -3,7 +3,7 @@ using System.Security.Cryptography;
 using CleanHr.AuthApi.Application.Infrastructures;
 using CleanHr.AuthApi.Application.Services;
 using CleanHr.AuthApi.Domain;
-using CleanHr.AuthApi.Domain.Aggregates;
+using CleanHr.AuthApi.Domain.Models;
 using MediatR;
 using TanvirArjel.ArgumentChecker;
 using TanvirArjel.EFCore.GenericRepository;

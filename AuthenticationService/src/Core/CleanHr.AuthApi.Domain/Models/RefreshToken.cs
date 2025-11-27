@@ -1,22 +1,25 @@
 ﻿using System;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
-using CleanHr.AuthApi.Domain.Aggregates.Validators;
+using CleanHr.AuthApi.Domain.Validators;
 using FluentValidation.Results;
 
-namespace CleanHr.AuthApi.Domain.Aggregates;
+namespace CleanHr.AuthApi.Domain.Models;
 
 public class RefreshToken
 {
-    private RefreshToken(Guid userId, string token, Guid? tokenFamilyId = null, int expirationDays = 30)
+    private RefreshToken(
+        Guid userId,
+        string token,
+        Guid? tokenFamilyId,
+        int expirationDays = 30)
     {
         Id = Guid.NewGuid();
         UserId = userId;
         Token = token?.Trim();
-        TokenFamilyId = tokenFamilyId ?? Guid.NewGuid(); // New family if not provided
+        TokenFamilyId = tokenFamilyId ?? Id; // First token in family uses its own ID as family ID
         CreatedAtUtc = DateTime.UtcNow;
         ExpireAtUtc = DateTime.UtcNow.AddDays(expirationDays);
-        IsRevoked = false;
     }
 
     // This is needed for EF Core query mapping
@@ -36,8 +39,6 @@ public class RefreshToken
     public DateTime CreatedAtUtc { get; private set; }
 
     public DateTime ExpireAtUtc { get; private set; }
-
-    public bool IsRevoked { get; private set; }
 
     public DateTime? RevokedAtUtc { get; private set; }
 
@@ -74,36 +75,20 @@ public class RefreshToken
         return Result<RefreshToken>.Success(refreshToken);
     }
 
-    public Result UpdateToken(string newToken, int expirationDays = 30)
+    public bool IsExpired()
     {
-        if (string.IsNullOrWhiteSpace(newToken))
-        {
-            return Result.Failure("The token cannot be empty.");
-        }
-
-        Token = newToken.Trim();
-        CreatedAtUtc = DateTime.UtcNow;
-        ExpireAtUtc = DateTime.UtcNow.AddDays(expirationDays);
-
-        return Result.Success();
-    }
-
-    public Result<bool> IsExpired()
-    {
-        bool isExpired = DateTime.UtcNow > ExpireAtUtc;
-        return Result<bool>.Success(isExpired);
+        return DateTime.UtcNow > ExpireAtUtc;
     }
 
     public void Revoke()
     {
-        IsRevoked = true;
         RevokedAtUtc = DateTime.UtcNow;
     }
 
     public bool IsValid()
     {
         // Token is valid only if: not revoked AND not expired AND not used yet
-        return !IsRevoked && DateTime.UtcNow <= ExpireAtUtc && UsedAtUtc == null;
+        return !RevokedAtUtc.HasValue && DateTime.UtcNow <= ExpireAtUtc && UsedAtUtc == null;
     }
 
     public void MarkAsUsed()
@@ -111,7 +96,7 @@ public class RefreshToken
         UsedAtUtc = DateTime.UtcNow;
     }
 
-    public bool HasBeenUsed()
+    public bool IsUsed()
     {
         return UsedAtUtc.HasValue;
     }

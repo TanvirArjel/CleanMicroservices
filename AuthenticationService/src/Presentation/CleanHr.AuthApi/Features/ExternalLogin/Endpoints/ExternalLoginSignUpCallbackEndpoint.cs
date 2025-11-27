@@ -1,7 +1,7 @@
 ﻿using System.Security.Claims;
 using CleanHr.AuthApi.Application.Services;
 using CleanHr.AuthApi.Application.Extensions;
-using CleanHr.AuthApi.Domain.Aggregates;
+using CleanHr.AuthApi.Domain.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;

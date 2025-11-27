@@ -1,5 +1,5 @@
 using CleanHr.AuthApi.Domain;
-using CleanHr.AuthApi.Domain.Aggregates;
+using CleanHr.AuthApi.Domain.Models;
 using MediatR;
 using TanvirArjel.ArgumentChecker;
 using TanvirArjel.EFCore.GenericRepository;
@@ -32,7 +32,7 @@ public sealed class RevokeRefreshTokenFamilyCommand(Guid userId, string refreshT
 
             // Revoke all tokens in the same family (device/session)
             List<RefreshToken> familyTokens = await _repository.GetListAsync<RefreshToken>(
-                rt => rt.TokenFamilyId == refreshToken.TokenFamilyId && !rt.IsRevoked,
+                rt => rt.TokenFamilyId == refreshToken.TokenFamilyId && !rt.RevokedAtUtc.HasValue,
                 cancellationToken);
 
             foreach (RefreshToken token in familyTokens)

@@ -200,7 +200,6 @@ namespace CleanHr.AuthApi.Persistence.RelationalDB.Migrations
                     Token = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
                     CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "getutcdate()"),
                     ExpireAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    IsRevoked = table.Column<bool>(type: "bit", nullable: false, defaultValue: false),
                     RevokedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
                     UsedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true)
                 },

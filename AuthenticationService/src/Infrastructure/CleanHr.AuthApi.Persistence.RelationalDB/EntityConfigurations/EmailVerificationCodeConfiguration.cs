@@ -1,4 +1,4 @@
-﻿using CleanHr.AuthApi.Domain.Aggregates;
+﻿using CleanHr.AuthApi.Domain.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;

@@ -3,7 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Linq.Dynamic.Core;
 using CleanHr.AuthApi.Application.Extensions;
-using CleanHr.AuthApi.Domain.Aggregates;
+using CleanHr.AuthApi.Domain.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;

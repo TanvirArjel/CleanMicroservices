@@ -1,9 +1,10 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using CleanHr.AuthApi.Domain.Repositories;
 using FluentValidation;
 
-namespace CleanHr.AuthApi.Domain.Aggregates.Validators;
+namespace CleanHr.AuthApi.Domain.Validators;
 
 public class UserNameValidator : AbstractValidator<string>
 {

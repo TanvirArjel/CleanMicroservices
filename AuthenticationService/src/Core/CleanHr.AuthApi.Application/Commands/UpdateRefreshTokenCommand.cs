@@ -1,5 +1,5 @@
 ﻿using CleanHr.AuthApi.Domain;
-using CleanHr.AuthApi.Domain.Aggregates;
+using CleanHr.AuthApi.Domain.Models;
 using MediatR;
 using Microsoft.Extensions.Logging;
 using TanvirArjel.ArgumentChecker;
@@ -36,7 +36,7 @@ public sealed class UpdateRefreshTokenCommand(Guid userId, string oldToken, stri
 
             // SECURITY: Detect token reuse attack with device isolation
             // If token has already been used, this is a security breach - revoke only this device's token family
-            if (oldRefreshToken.HasBeenUsed())
+            if (oldRefreshToken.IsUsed())
             {
                 _logger.LogWarning(
                     "SECURITY ALERT: Refresh token reuse detected for user {UserId}. Token {TokenId} (Family: {TokenFamilyId}) was already used at {UsedAt}. Revoking token family.",
@@ -47,7 +47,7 @@ public sealed class UpdateRefreshTokenCommand(Guid userId, string oldToken, stri
 
                 // Revoke only tokens in the same family (device isolation - don't affect other devices)
                 List<RefreshToken> familyTokens = await _repository.GetListAsync<RefreshToken>(
-                    rt => rt.TokenFamilyId == oldRefreshToken.TokenFamilyId && !rt.IsRevoked,
+                    rt => rt.TokenFamilyId == oldRefreshToken.TokenFamilyId && !rt.RevokedAtUtc.HasValue,
                     cancellationToken);
 
                 foreach (RefreshToken token in familyTokens)
