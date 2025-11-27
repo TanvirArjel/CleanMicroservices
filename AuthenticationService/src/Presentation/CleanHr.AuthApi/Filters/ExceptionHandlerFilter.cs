@@ -1,6 +1,5 @@
 ﻿using System.Text;
 using CleanHr.AuthApi.Application.Extensions;
-using CleanHr.AuthApi.Domain.Exceptions;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
@@ -11,38 +10,19 @@ namespace CleanHr.AuthApi.Filters;
 
 internal sealed class ExceptionHandlerFilter : IAsyncExceptionFilter
 {
-    private readonly ILogger<ExceptionHandlerFilter> _exceptionLogger;
+    private readonly ILogger<ExceptionHandlerFilter> _logger;
 
-    public ExceptionHandlerFilter(ILogger<ExceptionHandlerFilter> exceptionLogger)
+    public ExceptionHandlerFilter(ILogger<ExceptionHandlerFilter> logger)
     {
-        _exceptionLogger = exceptionLogger ?? throw new ArgumentNullException(nameof(exceptionLogger));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     public async Task OnExceptionAsync(ExceptionContext context)
     {
         context.ThrowIfNull(nameof(context));
 
-        // DomainValidationException should be treated as a validation error.
-        if (context.Exception is DomainValidationException)
-        {
-            context.ModelState.AddModelError(string.Empty, context.Exception.Message);
-            context.Result = new BadRequestObjectResult(new ValidationProblemDetails(context.ModelState));
-            return;
-        }
-
-        // EntityNotFoundException should be treated as a validation error.
-        if (context.Exception is EntityNotFoundException)
-        {
-            context.ModelState.AddModelError(string.Empty, context.Exception.Message);
-            context.Result = new BadRequestObjectResult(new ValidationProblemDetails(context.ModelState));
-            return;
-        }
-
         HttpRequest httpRequest = context.HttpContext.Request;
         string requestPath = httpRequest.GetEncodedUrl();
-
-        string requestBoy = string.Empty;
-
         try
         {
             httpRequest.Body.Seek(0, SeekOrigin.Begin);
@@ -53,15 +33,14 @@ internal sealed class ExceptionHandlerFilter : IAsyncExceptionFilter
         }
 
         using StreamReader streamReader = new(httpRequest.Body, Encoding.UTF8);
-        requestBoy = await streamReader.ReadToEndAsync();
-
+        string requestBody = await streamReader.ReadToEndAsync();
         Dictionary<string, object> fields = new()
         {
             { "RequestPath", requestPath },
-            { "RequestBody", requestBoy }
+            { "RequestBody", requestBody }
         };
 
-        _exceptionLogger.LogException(context.Exception, $"Error occurred while processing request to {requestPath}", fields);
+        _logger.LogException(context.Exception, $"Error occurred while processing request to {requestPath}", fields);
 
         context.Result = new StatusCodeResult(500);
     }

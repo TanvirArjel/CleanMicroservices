@@ -13,10 +13,18 @@ public class PasswordResetCodeConfiguration : IEntityTypeConfiguration<PasswordR
         builder.HasKey(evc => evc.Id);
         builder.Property(evc => evc.Id).ValueGeneratedOnAdd();
 
+        builder.Property(evc => evc.UserId).IsRequired();
         builder.Property(evc => evc.Email).HasMaxLength(50).IsRequired();
         builder.Property(evc => evc.Code).HasMaxLength(6).IsFixedLength().IsRequired();
 
         builder.Property(eu => eu.SentAtUtc).Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
         builder.Property(eu => eu.UsedAtUtc).Metadata.SetBeforeSaveBehavior(PropertySaveBehavior.Throw);
+
+        builder.HasOne(prc => prc.ApplicationUser)
+            .WithMany()
+            .HasForeignKey(prc => prc.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasIndex(prc => prc.UserId);
     }
 }

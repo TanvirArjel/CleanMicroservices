@@ -8,6 +8,10 @@ public class PasswordResetCodeValidator : AbstractValidator<PasswordResetCode>
 {
     public PasswordResetCodeValidator()
     {
+        RuleFor(p => p.UserId)
+            .NotEmpty()
+            .WithMessage("The UserId is required.");
+
         RuleFor(p => p.Email)
             .NotEmpty()
             .WithMessage("The Email is required.")

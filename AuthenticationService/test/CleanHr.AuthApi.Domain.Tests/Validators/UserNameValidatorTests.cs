@@ -16,7 +16,8 @@ public class UserNameValidatorTests
     public async Task Validate_WithValidUserName_ShouldReturnValid()
     {
         // Arrange
-        UserNameValidator validator = new();
+        Mock<IApplicationUserRepository> repositoryMock = new();
+        UserNameValidator validator = new(Guid.NewGuid(), repositoryMock.Object);
         string userName = "testuser123";
 
         // Act
@@ -33,7 +34,8 @@ public class UserNameValidatorTests
     public async Task Validate_WithEmptyUserName_ShouldReturnInvalid(string userName)
     {
         // Arrange
-        UserNameValidator validator = new();
+        Mock<IApplicationUserRepository> repositoryMock = new();
+        UserNameValidator validator = new(Guid.NewGuid(), repositoryMock.Object);
 
         // Act
         ValidationResult result = await validator.ValidateAsync(userName);
@@ -47,14 +49,15 @@ public class UserNameValidatorTests
     public async Task Validate_WithNullUserName_ShouldThrowException()
     {
         // Arrange
-        UserNameValidator validator = new();
+        Mock<IApplicationUserRepository> repositoryMock = new();
+        UserNameValidator validator = new(Guid.NewGuid(), repositoryMock.Object);
 
         // Act
-        Func<Task> act = async () => await validator.ValidateAsync(null as string);
+        ValidationResult result = await validator.ValidateAsync(null as string);
 
         // Assert
-        await act.Should().ThrowAsync<InvalidOperationException>()
-            .WithMessage("*Cannot pass a null model*");
+        result.IsValid.Should().BeFalse();
+        result.Errors.Should().Contain(e => e.ErrorMessage == "The UserName cannot be null.");
     }
 
     [Theory]
@@ -64,7 +67,8 @@ public class UserNameValidatorTests
     public async Task Validate_WithUserNameTooShort_ShouldReturnInvalid(string userName)
     {
         // Arrange
-        UserNameValidator validator = new();
+        Mock<IApplicationUserRepository> repositoryMock = new();
+        UserNameValidator validator = new(Guid.NewGuid(), repositoryMock.Object);
 
         // Act
         ValidationResult result = await validator.ValidateAsync(userName);
@@ -79,7 +83,8 @@ public class UserNameValidatorTests
     public async Task Validate_WithUserNameTooLong_ShouldReturnInvalid()
     {
         // Arrange
-        UserNameValidator validator = new();
+        Mock<IApplicationUserRepository> repositoryMock = new();
+        UserNameValidator validator = new(Guid.NewGuid(), repositoryMock.Object);
         string userName = new('a', 51); // 51 characters
 
         // Act
@@ -99,7 +104,8 @@ public class UserNameValidatorTests
     public async Task Validate_WithValidUserNameLengths_ShouldReturnValid(string userName)
     {
         // Arrange
-        UserNameValidator validator = new();
+        Mock<IApplicationUserRepository> repositoryMock = new();
+        UserNameValidator validator = new(Guid.NewGuid(), repositoryMock.Object);
 
         // Act
         ValidationResult result = await validator.ValidateAsync(userName);
@@ -173,7 +179,8 @@ public class UserNameValidatorTests
     public async Task Validate_WithoutRepository_ShouldSkipUniquenessCheck()
     {
         // Arrange
-        UserNameValidator validator = new(); // No repository provided
+        Mock<IApplicationUserRepository> repositoryMock = new();
+        UserNameValidator validator = new(Guid.NewGuid(), repositoryMock.Object);
         string userName = "testuser";
 
         // Act

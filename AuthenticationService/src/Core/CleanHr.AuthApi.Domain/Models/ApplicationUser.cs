@@ -37,9 +37,6 @@ public class ApplicationUser : IdentityUser<Guid>
 
     public DateTime? UpdatedAtUtc { get; private set; }
 
-    // Navigation Properties
-    public ICollection<RefreshToken> RefreshTokens { get; private set; } = [];
-
     /// <summary>
     /// Factory method for creating a new ApplicationUser with validation.
     /// </summary>

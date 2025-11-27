@@ -22,6 +22,8 @@ public class PasswordResetCode
 
     public Guid Id { get; private set; }
 
+    public Guid UserId { get; private set; }
+
     public string Email { get; private set; }
 
     public string Code { get; private set; }
@@ -30,18 +32,22 @@ public class PasswordResetCode
 
     public DateTime? UsedAtUtc { get; private set; }
 
+    public ApplicationUser ApplicationUser { get; private set; }
+
     /// <summary>
     /// Factory method for creating a new PasswordResetCode with validation.
     /// </summary>
+    /// <param name="userId">The user ID.</param>
     /// <param name="email">The email address.</param>
     /// <param name="code">The reset code (6 digits).</param>
     /// <returns>Returns <see cref="Task{TResult}"/>.</returns>
-    public static async Task<Result<PasswordResetCode>> CreateAsync(string email, string code)
+    public static async Task<Result<PasswordResetCode>> CreateAsync(Guid userId, string email, string code)
     {
         PasswordResetCodeValidator validator = new();
 
         PasswordResetCode resetCode = new(Guid.NewGuid())
         {
+            UserId = userId,
             Email = email?.Trim(),
             Code = code?.Trim()
         };

@@ -44,10 +44,13 @@ public class PasswordValidatorTests
     [Fact]
     public void Validate_WithNullPassword_ShouldThrowException()
     {
-        // Act & Assert
-        Action act = () => _validator.Validate(null as string);
-        act.Should().Throw<InvalidOperationException>()
-            .WithMessage("*Cannot pass a null model*");
+        // Act
+        ValidationResult result = _validator.Validate(null as string);
+
+        // Assert
+        result.IsValid.Should().BeFalse();
+        result.Errors.Should().ContainSingle()
+            .Which.ErrorMessage.Should().Be("The Password cannot be null.");
     }
 
     [Theory]

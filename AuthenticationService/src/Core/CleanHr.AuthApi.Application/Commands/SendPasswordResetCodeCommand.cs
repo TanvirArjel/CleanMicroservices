@@ -34,9 +34,9 @@ public sealed class SendPasswordResetCodeCommand(string email) : IRequest<Result
         {
             request.ThrowIfNull(nameof(request));
 
-            bool isExistent = await _repository.ExistsAsync<ApplicationUser>(u => u.Email == request.Email, cancellationToken);
+            ApplicationUser applicationUser = await _repository.GetAsync<ApplicationUser>(u => u.Email == request.Email, cancellationToken);
 
-            if (isExistent == false)
+            if (applicationUser == null)
             {
                 return Result.Failure("The user does not exist with the provided email.");
             }
@@ -44,7 +44,7 @@ public sealed class SendPasswordResetCodeCommand(string email) : IRequest<Result
             int randomNumber = RandomNumberGenerator.GetInt32(0, 1000000);
             string verificationCode = randomNumber.ToString("D6", CultureInfo.InvariantCulture);
 
-            Result<PasswordResetCode> result = await PasswordResetCode.CreateAsync(request.Email, verificationCode);
+            Result<PasswordResetCode> result = await PasswordResetCode.CreateAsync(applicationUser.Id, request.Email, verificationCode);
 
             if (result.IsSuccess == false)
             {

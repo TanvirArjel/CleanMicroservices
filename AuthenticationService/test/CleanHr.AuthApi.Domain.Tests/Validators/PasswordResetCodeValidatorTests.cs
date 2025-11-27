@@ -20,7 +20,8 @@ public class PasswordResetCodeValidatorTests
     public async Task Validate_WithValidPasswordResetCode_ShouldReturnValid()
     {
         // Arrange
-        Result<PasswordResetCode> codeResult = await PasswordResetCode.CreateAsync("test@example.com", "123456");
+        Guid userId = Guid.NewGuid();
+        Result<PasswordResetCode> codeResult = await PasswordResetCode.CreateAsync(userId, "test@example.com", "123456");
 
         // Assert
         codeResult.IsSuccess.Should().BeTrue();
@@ -33,13 +34,26 @@ public class PasswordResetCodeValidatorTests
         result.Errors.Should().BeEmpty();
     }
 
+    [Fact]
+    public async Task Validate_WithEmptyUserId_ShouldReturnInvalid()
+    {
+        // Arrange
+        Guid userId = Guid.Empty;
+        Result<PasswordResetCode> codeResult = await PasswordResetCode.CreateAsync(userId, "test@example.com", "123456");
+
+        // Assert - The factory should fail validation
+        codeResult.IsSuccess.Should().BeFalse();
+        codeResult.Errors.Should().ContainKey("UserId");
+    }
+
     [Theory]
     [InlineData("")]
     [InlineData("   ")]
     public async Task Validate_WithEmptyEmail_ShouldReturnInvalid(string email)
     {
         // Arrange
-        Result<PasswordResetCode> codeResult = await PasswordResetCode.CreateAsync(email, "123456");
+        Guid userId = Guid.NewGuid();
+        Result<PasswordResetCode> codeResult = await PasswordResetCode.CreateAsync(userId, email, "123456");
 
         // Assert - The factory should fail validation
         codeResult.IsSuccess.Should().BeFalse();
@@ -50,7 +64,8 @@ public class PasswordResetCodeValidatorTests
     public async Task Validate_WithNullEmail_ShouldReturnInvalid()
     {
         // Arrange
-        Result<PasswordResetCode> codeResult = await PasswordResetCode.CreateAsync(null, "123456");
+        Guid userId = Guid.NewGuid();
+        Result<PasswordResetCode> codeResult = await PasswordResetCode.CreateAsync(userId, null, "123456");
 
         // Assert - The factory should fail validation
         codeResult.IsSuccess.Should().BeFalse();
@@ -64,7 +79,8 @@ public class PasswordResetCodeValidatorTests
     public async Task Validate_WithInvalidEmail_ShouldReturnInvalid(string email)
     {
         // Arrange
-        Result<PasswordResetCode> codeResult = await PasswordResetCode.CreateAsync(email, "123456");
+        Guid userId = Guid.NewGuid();
+        Result<PasswordResetCode> codeResult = await PasswordResetCode.CreateAsync(userId, email, "123456");
 
         // Assert - The factory should fail validation
         codeResult.IsSuccess.Should().BeFalse();
@@ -77,7 +93,8 @@ public class PasswordResetCodeValidatorTests
     public async Task Validate_WithEmptyCode_ShouldReturnInvalid(string code)
     {
         // Arrange
-        Result<PasswordResetCode> codeResult = await PasswordResetCode.CreateAsync("test@example.com", code);
+        Guid userId = Guid.NewGuid();
+        Result<PasswordResetCode> codeResult = await PasswordResetCode.CreateAsync(userId, "test@example.com", code);
 
         // Assert - The factory should fail validation
         codeResult.IsSuccess.Should().BeFalse();
@@ -88,7 +105,8 @@ public class PasswordResetCodeValidatorTests
     public async Task Validate_WithNullCode_ShouldReturnInvalid()
     {
         // Arrange
-        Result<PasswordResetCode> codeResult = await PasswordResetCode.CreateAsync("test@example.com", null);
+        Guid userId = Guid.NewGuid();
+        Result<PasswordResetCode> codeResult = await PasswordResetCode.CreateAsync(userId, "test@example.com", null);
 
         // Assert - The factory should fail validation
         codeResult.IsSuccess.Should().BeFalse();
@@ -102,7 +120,8 @@ public class PasswordResetCodeValidatorTests
     public async Task Validate_WithInvalidCodeLength_ShouldReturnInvalid(string code)
     {
         // Arrange
-        Result<PasswordResetCode> codeResult = await PasswordResetCode.CreateAsync("test@example.com", code);
+        Guid userId = Guid.NewGuid();
+        Result<PasswordResetCode> codeResult = await PasswordResetCode.CreateAsync(userId, "test@example.com", code);
 
         // Assert - The factory should fail validation
         codeResult.IsSuccess.Should().BeFalse();
@@ -117,7 +136,8 @@ public class PasswordResetCodeValidatorTests
     public async Task Validate_WithNonDigitCode_ShouldReturnInvalid(string code)
     {
         // Arrange
-        Result<PasswordResetCode> codeResult = await PasswordResetCode.CreateAsync("test@example.com", code);
+        Guid userId = Guid.NewGuid();
+        Result<PasswordResetCode> codeResult = await PasswordResetCode.CreateAsync(userId, "test@example.com", code);
 
         // Assert - The factory should fail validation
         codeResult.IsSuccess.Should().BeFalse();
@@ -132,7 +152,8 @@ public class PasswordResetCodeValidatorTests
     public async Task Validate_WithValidDigitCode_ShouldReturnValid(string code)
     {
         // Arrange
-        Result<PasswordResetCode> codeResult = await PasswordResetCode.CreateAsync("test@example.com", code);
+        Guid userId = Guid.NewGuid();
+        Result<PasswordResetCode> codeResult = await PasswordResetCode.CreateAsync(userId, "test@example.com", code);
 
         // Assert factory success
         codeResult.IsSuccess.Should().BeTrue();
@@ -148,7 +169,8 @@ public class PasswordResetCodeValidatorTests
     public async Task Validate_WithValidEmailAndCode_ShouldReturnValid()
     {
         // Arrange
-        Result<PasswordResetCode> codeResult = await PasswordResetCode.CreateAsync("user@example.com", "789012");
+        Guid userId = Guid.NewGuid();
+        Result<PasswordResetCode> codeResult = await PasswordResetCode.CreateAsync(userId, "user@example.com", "789012");
 
         // Assert factory success
         codeResult.IsSuccess.Should().BeTrue();
@@ -167,7 +189,8 @@ public class PasswordResetCodeValidatorTests
     public async Task Validate_WithSentAtUtcInPast_ShouldReturnValid()
     {
         // Arrange
-        Result<PasswordResetCode> codeResult = await PasswordResetCode.CreateAsync("test@example.com", "123456");
+        Guid userId = Guid.NewGuid();
+        Result<PasswordResetCode> codeResult = await PasswordResetCode.CreateAsync(userId, "test@example.com", "123456");
 
         // Assert factory success
         codeResult.IsSuccess.Should().BeTrue();

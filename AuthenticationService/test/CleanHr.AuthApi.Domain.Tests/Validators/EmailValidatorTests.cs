@@ -53,11 +53,12 @@ public class EmailValidatorTests
         EmailValidator validator = new(Guid.NewGuid(), repositoryMock.Object);
 
         // Act
-        Func<Task> act = async () => await validator.ValidateAsync(null as string);
+        ValidationResult result = await validator.ValidateAsync(null as string);
 
         // Assert
-        await act.Should().ThrowAsync<InvalidOperationException>()
-            .WithMessage("*Cannot pass a null model*");
+        result.IsValid.Should().BeFalse();
+        result.Errors.Should().ContainSingle()
+            .Which.ErrorMessage.Should().Be("The Email cannot be null.");
     }
 
     [Theory]

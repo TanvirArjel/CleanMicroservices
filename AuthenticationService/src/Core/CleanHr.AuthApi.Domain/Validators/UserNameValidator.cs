@@ -3,12 +3,13 @@ using System.Threading;
 using System.Threading.Tasks;
 using CleanHr.AuthApi.Domain.Repositories;
 using FluentValidation;
+using FluentValidation.Results;
 
 namespace CleanHr.AuthApi.Domain.Validators;
 
-public class UserNameValidator : AbstractValidator<string>
+public sealed class UserNameValidator : AbstractValidator<string>
 {
-    public UserNameValidator(Guid userId = default, IApplicationUserRepository userRepository = null)
+    public UserNameValidator(Guid userId, IApplicationUserRepository userRepository)
     {
         RuleFor(userName => userName)
             .NotEmpty()
@@ -16,14 +17,24 @@ public class UserNameValidator : AbstractValidator<string>
             .MinimumLength(5)
             .WithMessage("The UserName must be at least 5 characters.")
             .MaximumLength(50)
-            .WithMessage("The UserName can't be more than 50 characters long.");
+            .WithMessage("The UserName can't be more than 50 characters long.")
+            .MustAsync((userName, cancellationToken) => BeUniqueUserNameAsync(userName, userId, userRepository, cancellationToken))
+            .WithMessage("A user already exists with the provided username.");
 
-        if (userRepository != null)
+    }
+
+    protected override bool PreValidate(ValidationContext<string> context, ValidationResult result)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        ArgumentNullException.ThrowIfNull(result);
+
+        if (context.InstanceToValidate == null)
         {
-            RuleFor(userName => userName)
-                .MustAsync((userName, cancellationToken) => BeUniqueUserNameAsync(userName, userId, userRepository, cancellationToken))
-                .WithMessage("A user already exists with the provided username.");
+            result.Errors.Add(new ValidationFailure("UserName", "The UserName cannot be null."));
+            return false;
         }
+
+        return true;
     }
 
     private static async Task<bool> BeUniqueUserNameAsync(
