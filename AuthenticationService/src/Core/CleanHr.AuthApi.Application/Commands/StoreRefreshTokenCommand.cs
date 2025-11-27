@@ -11,33 +11,33 @@ public sealed class StoreRefreshTokenCommand(Guid userId, string token) : IReque
     public Guid UserId { get; } = userId.ThrowIfEmpty(nameof(userId));
 
     public string Token { get; } = token.ThrowIfNullOrEmpty(nameof(token));
-}
 
-internal class StoreRefreshTokenCommandHandler : IRequestHandler<StoreRefreshTokenCommand, Result<RefreshToken>>
-{
-    private readonly IRepository _repository;
-
-    public StoreRefreshTokenCommandHandler(IRepository repository)
+    private class StoreRefreshTokenCommandHandler : IRequestHandler<StoreRefreshTokenCommand, Result<RefreshToken>>
     {
-        _repository = repository ?? throw new ArgumentNullException(nameof(repository));
-    }
+        private readonly IRepository _repository;
 
-    public async Task<Result<RefreshToken>> Handle(StoreRefreshTokenCommand request, CancellationToken cancellationToken)
-    {
-        request.ThrowIfNull(nameof(request));
-
-        Result<RefreshToken> result = await RefreshToken.CreateAsync(request.UserId, request.Token);
-
-        if (result.IsSuccess == false)
+        public StoreRefreshTokenCommandHandler(IRepository repository)
         {
-            return result;
+            _repository = repository ?? throw new ArgumentNullException(nameof(repository));
         }
 
-        RefreshToken refreshToken = result.Value;
+        public async Task<Result<RefreshToken>> Handle(StoreRefreshTokenCommand request, CancellationToken cancellationToken)
+        {
+            request.ThrowIfNull(nameof(request));
 
-        _repository.Add(refreshToken);
-        await _repository.SaveChangesAsync(cancellationToken);
+            Result<RefreshToken> result = await RefreshToken.CreateAsync(request.UserId, request.Token);
 
-        return Result<RefreshToken>.Success(refreshToken);
+            if (result.IsSuccess == false)
+            {
+                return result;
+            }
+
+            RefreshToken refreshToken = result.Value;
+
+            _repository.Add(refreshToken);
+            await _repository.SaveChangesAsync(cancellationToken);
+
+            return Result<RefreshToken>.Success(refreshToken);
+        }
     }
 }

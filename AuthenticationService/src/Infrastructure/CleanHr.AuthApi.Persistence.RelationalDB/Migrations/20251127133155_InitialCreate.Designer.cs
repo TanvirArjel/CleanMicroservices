@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CleanHr.AuthApi.Persistence.RelationalDB.Migrations
 {
     [DbContext(typeof(CleanHrDbContext))]
-    [Migration("20251123063427_InitialCreate")]
+    [Migration("20251127133155_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -66,9 +66,8 @@ namespace CleanHr.AuthApi.Persistence.RelationalDB.Migrations
                         .IsConcurrencyToken()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("DialCode")
-                        .HasMaxLength(4)
-                        .HasColumnType("nvarchar(4)");
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("Email")
                         .IsRequired()
@@ -78,16 +77,8 @@ namespace CleanHr.AuthApi.Persistence.RelationalDB.Migrations
                     b.Property<bool>("EmailConfirmed")
                         .HasColumnType("bit");
 
-                    b.Property<string>("FullName")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
                     b.Property<bool>("IsDisabled")
                         .HasColumnType("bit");
-
-                    b.Property<string>("LanguageCulture")
-                        .HasMaxLength(4)
-                        .HasColumnType("nvarchar(4)");
 
                     b.Property<DateTime?>("LastLoggedInAtUtc")
                         .HasColumnType("datetime2");
@@ -123,6 +114,9 @@ namespace CleanHr.AuthApi.Persistence.RelationalDB.Migrations
 
                     b.Property<bool>("TwoFactorEnabled")
                         .HasColumnType("bit");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("UserName")
                         .IsRequired()
@@ -203,7 +197,8 @@ namespace CleanHr.AuthApi.Persistence.RelationalDB.Migrations
 
             modelBuilder.Entity("CleanHr.AuthApi.Domain.Aggregates.RefreshToken", b =>
                 {
-                    b.Property<Guid>("UserId")
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime>("CreatedAtUtc")
@@ -214,11 +209,34 @@ namespace CleanHr.AuthApi.Persistence.RelationalDB.Migrations
                     b.Property<DateTime>("ExpireAtUtc")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("Token")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                    b.Property<bool>("IsRevoked")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
 
-                    b.HasKey("UserId");
+                    b.Property<DateTime?>("RevokedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Token")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<Guid>("TokenFamilyId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("UsedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TokenFamilyId");
+
+                    b.HasIndex("UserId", "Token")
+                        .IsUnique();
 
                     b.ToTable("RefreshTokens", (string)null);
                 });
@@ -353,8 +371,8 @@ namespace CleanHr.AuthApi.Persistence.RelationalDB.Migrations
             modelBuilder.Entity("CleanHr.AuthApi.Domain.Aggregates.RefreshToken", b =>
                 {
                     b.HasOne("CleanHr.AuthApi.Domain.Aggregates.ApplicationUser", "ApplicationUser")
-                        .WithOne("RefreshToken")
-                        .HasForeignKey("CleanHr.AuthApi.Domain.Aggregates.RefreshToken", "UserId")
+                        .WithMany("RefreshTokens")
+                        .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -425,7 +443,7 @@ namespace CleanHr.AuthApi.Persistence.RelationalDB.Migrations
 
             modelBuilder.Entity("CleanHr.AuthApi.Domain.Aggregates.ApplicationUser", b =>
                 {
-                    b.Navigation("RefreshToken");
+                    b.Navigation("RefreshTokens");
                 });
 #pragma warning restore 612, 618
         }

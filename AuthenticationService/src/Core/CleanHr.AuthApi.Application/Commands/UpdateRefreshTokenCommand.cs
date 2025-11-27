@@ -14,77 +14,77 @@ public sealed class UpdateRefreshTokenCommand(Guid userId, string oldToken, stri
     public string OldToken { get; } = oldToken.ThrowIfNullOrEmpty(nameof(oldToken));
 
     public string NewToken { get; } = newToken.ThrowIfNullOrEmpty(nameof(newToken));
-}
 
-internal class UpdateRefreshTokenCommandHandler(IRepository repository, ILogger<UpdateRefreshTokenCommandHandler> logger) : IRequestHandler<UpdateRefreshTokenCommand, Result<RefreshToken>>
-{
-    private readonly IRepository _repository = repository ?? throw new ArgumentNullException(nameof(repository));
-    private readonly ILogger<UpdateRefreshTokenCommandHandler> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-
-    public async Task<Result<RefreshToken>> Handle(UpdateRefreshTokenCommand request, CancellationToken cancellationToken)
+    private class UpdateRefreshTokenCommandHandler(IRepository repository, ILogger<UpdateRefreshTokenCommandHandler> logger) : IRequestHandler<UpdateRefreshTokenCommand, Result<RefreshToken>>
     {
-        request.ThrowIfNull(nameof(request));
+        private readonly IRepository _repository = repository ?? throw new ArgumentNullException(nameof(repository));
+        private readonly ILogger<UpdateRefreshTokenCommandHandler> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
-        // Find the old refresh token
-        RefreshToken oldRefreshToken = await _repository.GetAsync<RefreshToken>(
-            rt => rt.UserId == request.UserId && rt.Token == request.OldToken,
-            cancellationToken);
-
-        if (oldRefreshToken == null)
+        public async Task<Result<RefreshToken>> Handle(UpdateRefreshTokenCommand request, CancellationToken cancellationToken)
         {
-            return Result<RefreshToken>.Failure($"The RefreshToken does not exist for user: {request.UserId}.");
-        }
+            request.ThrowIfNull(nameof(request));
 
-        // SECURITY: Detect token reuse attack with device isolation
-        // If token has already been used, this is a security breach - revoke only this device's token family
-        if (oldRefreshToken.HasBeenUsed())
-        {
-            _logger.LogWarning(
-                "SECURITY ALERT: Refresh token reuse detected for user {UserId}. Token {TokenId} (Family: {TokenFamilyId}) was already used at {UsedAt}. Revoking token family.",
-                request.UserId,
-                oldRefreshToken.Id,
-                oldRefreshToken.TokenFamilyId,
-                oldRefreshToken.UsedAtUtc);
-
-            // Revoke only tokens in the same family (device isolation - don't affect other devices)
-            List<RefreshToken> familyTokens = await _repository.GetListAsync<RefreshToken>(
-                rt => rt.TokenFamilyId == oldRefreshToken.TokenFamilyId && !rt.IsRevoked,
+            // Find the old refresh token
+            RefreshToken oldRefreshToken = await _repository.GetAsync<RefreshToken>(
+                rt => rt.UserId == request.UserId && rt.Token == request.OldToken,
                 cancellationToken);
 
-            foreach (RefreshToken token in familyTokens)
+            if (oldRefreshToken == null)
             {
-                token.Revoke();
-                _repository.Update(token);
+                return Result<RefreshToken>.Failure($"The RefreshToken does not exist for user: {request.UserId}.");
             }
+
+            // SECURITY: Detect token reuse attack with device isolation
+            // If token has already been used, this is a security breach - revoke only this device's token family
+            if (oldRefreshToken.HasBeenUsed())
+            {
+                _logger.LogWarning(
+                    "SECURITY ALERT: Refresh token reuse detected for user {UserId}. Token {TokenId} (Family: {TokenFamilyId}) was already used at {UsedAt}. Revoking token family.",
+                    request.UserId,
+                    oldRefreshToken.Id,
+                    oldRefreshToken.TokenFamilyId,
+                    oldRefreshToken.UsedAtUtc);
+
+                // Revoke only tokens in the same family (device isolation - don't affect other devices)
+                List<RefreshToken> familyTokens = await _repository.GetListAsync<RefreshToken>(
+                    rt => rt.TokenFamilyId == oldRefreshToken.TokenFamilyId && !rt.IsRevoked,
+                    cancellationToken);
+
+                foreach (RefreshToken token in familyTokens)
+                {
+                    token.Revoke();
+                    _repository.Update(token);
+                }
+
+                await _repository.SaveChangesAsync(cancellationToken);
+
+                return Result<RefreshToken>.Failure("Token reuse detected. This device's session has been revoked for security. Please login again.");
+            }
+
+            // Mark old token as used (one-time use enforcement)
+            oldRefreshToken.MarkAsUsed();
+
+            // Also revoke it for extra safety
+            oldRefreshToken.Revoke();
+            _repository.Update(oldRefreshToken);
+
+            // Create new refresh token in the SAME family (token rotation within device/session)
+            Result<RefreshToken> createResult = await RefreshToken.CreateAsync(
+                request.UserId,
+                request.NewToken,
+                oldRefreshToken.TokenFamilyId); // Inherit family ID for rotation chain
+
+            if (createResult.IsSuccess == false)
+            {
+                return createResult;
+            }
+
+            RefreshToken newRefreshToken = createResult.Value;
+            _repository.Add(newRefreshToken);
 
             await _repository.SaveChangesAsync(cancellationToken);
 
-            return Result<RefreshToken>.Failure("Token reuse detected. This device's session has been revoked for security. Please login again.");
+            return Result<RefreshToken>.Success(newRefreshToken);
         }
-
-        // Mark old token as used (one-time use enforcement)
-        oldRefreshToken.MarkAsUsed();
-
-        // Also revoke it for extra safety
-        oldRefreshToken.Revoke();
-        _repository.Update(oldRefreshToken);
-
-        // Create new refresh token in the SAME family (token rotation within device/session)
-        Result<RefreshToken> createResult = await RefreshToken.CreateAsync(
-            request.UserId,
-            request.NewToken,
-            oldRefreshToken.TokenFamilyId); // Inherit family ID for rotation chain
-
-        if (createResult.IsSuccess == false)
-        {
-            return createResult;
-        }
-
-        RefreshToken newRefreshToken = createResult.Value;
-        _repository.Add(newRefreshToken);
-
-        await _repository.SaveChangesAsync(cancellationToken);
-
-        return Result<RefreshToken>.Success(newRefreshToken);
     }
 }

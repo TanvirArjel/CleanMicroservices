@@ -109,15 +109,6 @@ public sealed class ViewRenderService
 
             userId.ThrowIfEmpty(nameof(userId));
 
-            string userLanguageCulture = await _userManager.Users.Where(u => u.Id == userId)
-                .Select(u => u.LanguageCulture).FirstOrDefaultAsync();
-
-            if (!string.IsNullOrWhiteSpace(userLanguageCulture))
-            {
-                Thread.CurrentThread.CurrentCulture = new CultureInfo(userLanguageCulture);
-                Thread.CurrentThread.CurrentUICulture = new CultureInfo(userLanguageCulture);
-            }
-
             string viewString = await RenderViewToStringAsync(viewNameOrPath, model);
             return viewString;
         }

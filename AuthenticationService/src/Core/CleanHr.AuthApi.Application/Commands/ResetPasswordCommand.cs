@@ -9,74 +9,75 @@ using TanvirArjel.EFCore.GenericRepository;
 
 namespace CleanHr.AuthApi.Application.Commands;
 
-public sealed record ResetPasswordCommand(string Email, string Code, string NewPassword) : IRequest<Result>;
-
-internal class ResetPasswordCommandHandler : IRequestHandler<ResetPasswordCommand, Result>
+public sealed record ResetPasswordCommand(string Email, string Code, string NewPassword) : IRequest<Result>
 {
-    private readonly IRepository _repository;
-    private readonly IPasswordHasher<ApplicationUser> _passwordHasher;
-
-    public ResetPasswordCommandHandler(
-        IRepository repository,
-        IPasswordHasher<ApplicationUser> passwordHasher)
+    private class ResetPasswordCommandHandler : IRequestHandler<ResetPasswordCommand, Result>
     {
-        _repository = repository ?? throw new ArgumentNullException(nameof(repository));
-        _passwordHasher = passwordHasher ?? throw new ArgumentNullException(nameof(passwordHasher));
-    }
+        private readonly IRepository _repository;
+        private readonly IPasswordHasher<ApplicationUser> _passwordHasher;
 
-    public async Task<Result> Handle(ResetPasswordCommand request, CancellationToken cancellationToken)
-    {
-        request.ThrowIfNull(nameof(request));
-
-        IDbContextTransaction dbContextTransaction = await _repository
-                .BeginTransactionAsync(IsolationLevel.Unspecified, cancellationToken);
-
-        try
+        public ResetPasswordCommandHandler(
+            IRepository repository,
+            IPasswordHasher<ApplicationUser> passwordHasher)
         {
-            PasswordResetCode passwordResetCode = await _repository
-                .GetAsync<PasswordResetCode>(evc => evc.Email == request.Email && evc.Code == request.Code && evc.UsedAtUtc == null, cancellationToken);
-
-            if (passwordResetCode == null)
-            {
-                await dbContextTransaction.RollbackAsync(cancellationToken);
-                return Result.Failure("Either email or password reset code is incorrect.");
-            }
-
-            if (DateTime.UtcNow > passwordResetCode.SentAtUtc.AddMinutes(5))
-            {
-                await dbContextTransaction.RollbackAsync(cancellationToken);
-                return Result.Failure("The code is expired.");
-            }
-
-            ApplicationUser applicationUser = await _repository.GetAsync<ApplicationUser>(au => au.Email == request.Email, cancellationToken);
-
-            if (applicationUser == null)
-            {
-                await dbContextTransaction.RollbackAsync(cancellationToken);
-                return Result.Failure("The provided email is not related to any account.");
-            }
-
-            // Use domain method to set password (includes validation)
-            Result setPasswordResult = await applicationUser.SetPasswordAsync(request.NewPassword, _passwordHasher);
-
-            if (setPasswordResult.IsSuccess == false)
-            {
-                await dbContextTransaction.RollbackAsync(cancellationToken);
-                return setPasswordResult;
-            }
-
-            _repository.Update(applicationUser);
-
-            passwordResetCode.MarkAsUsed();
-            _repository.Update(passwordResetCode);
-
-            await dbContextTransaction.CommitAsync(cancellationToken);
-            return Result.Success();
+            _repository = repository ?? throw new ArgumentNullException(nameof(repository));
+            _passwordHasher = passwordHasher ?? throw new ArgumentNullException(nameof(passwordHasher));
         }
-        catch (Exception)
+
+        public async Task<Result> Handle(ResetPasswordCommand request, CancellationToken cancellationToken)
         {
-            await dbContextTransaction.RollbackAsync(cancellationToken);
-            throw;
+            request.ThrowIfNull(nameof(request));
+
+            IDbContextTransaction dbContextTransaction = await _repository
+                    .BeginTransactionAsync(IsolationLevel.Unspecified, cancellationToken);
+
+            try
+            {
+                PasswordResetCode passwordResetCode = await _repository
+                    .GetAsync<PasswordResetCode>(evc => evc.Email == request.Email && evc.Code == request.Code && evc.UsedAtUtc == null, cancellationToken);
+
+                if (passwordResetCode == null)
+                {
+                    await dbContextTransaction.RollbackAsync(cancellationToken);
+                    return Result.Failure("Either email or password reset code is incorrect.");
+                }
+
+                if (DateTime.UtcNow > passwordResetCode.SentAtUtc.AddMinutes(5))
+                {
+                    await dbContextTransaction.RollbackAsync(cancellationToken);
+                    return Result.Failure("The code is expired.");
+                }
+
+                ApplicationUser applicationUser = await _repository.GetAsync<ApplicationUser>(au => au.Email == request.Email, cancellationToken);
+
+                if (applicationUser == null)
+                {
+                    await dbContextTransaction.RollbackAsync(cancellationToken);
+                    return Result.Failure("The provided email is not related to any account.");
+                }
+
+                // Use domain method to set password (includes validation)
+                Result setPasswordResult = await applicationUser.SetPasswordAsync(request.NewPassword, _passwordHasher);
+
+                if (setPasswordResult.IsSuccess == false)
+                {
+                    await dbContextTransaction.RollbackAsync(cancellationToken);
+                    return setPasswordResult;
+                }
+
+                _repository.Update(applicationUser);
+
+                passwordResetCode.MarkAsUsed();
+                _repository.Update(passwordResetCode);
+
+                await dbContextTransaction.CommitAsync(cancellationToken);
+                return Result.Success();
+            }
+            catch (Exception)
+            {
+                await dbContextTransaction.RollbackAsync(cancellationToken);
+                throw;
+            }
         }
     }
 }

@@ -30,11 +30,10 @@ namespace CleanHr.AuthApi.Persistence.RelationalDB.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    FullName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
-                    DialCode = table.Column<string>(type: "nvarchar(4)", maxLength: 4, nullable: true),
-                    LanguageCulture = table.Column<string>(type: "nvarchar(4)", maxLength: 4, nullable: true),
                     IsDisabled = table.Column<bool>(type: "bit", nullable: false),
                     LastLoggedInAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UpdatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
                     UserName = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
                     NormalizedUserName = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
                     Email = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
@@ -195,14 +194,19 @@ namespace CleanHr.AuthApi.Persistence.RelationalDB.Migrations
                 name: "RefreshTokens",
                 columns: table => new
                 {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Token = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    TokenFamilyId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Token = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
                     CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "getutcdate()"),
-                    ExpireAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    ExpireAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    IsRevoked = table.Column<bool>(type: "bit", nullable: false, defaultValue: false),
+                    RevokedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    UsedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_RefreshTokens", x => x.UserId);
+                    table.PrimaryKey("PK_RefreshTokens", x => x.Id);
                     table.ForeignKey(
                         name: "FK_RefreshTokens_AspNetUsers_UserId",
                         column: x => x.UserId,
@@ -274,6 +278,17 @@ namespace CleanHr.AuthApi.Persistence.RelationalDB.Migrations
                 name: "UserNameIndex",
                 table: "AspNetUsers",
                 column: "NormalizedUserName",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_RefreshTokens_TokenFamilyId",
+                table: "RefreshTokens",
+                column: "TokenFamilyId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_RefreshTokens_UserId_Token",
+                table: "RefreshTokens",
+                columns: new[] { "UserId", "Token" },
                 unique: true);
 
             migrationBuilder.CreateIndex(

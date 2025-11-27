@@ -10,22 +10,22 @@ public sealed class GetEmailVerificationCodeQuery(string email, string code) : I
     public string Email { get; } = email.ThrowIfNotValidEmail(nameof(email));
 
     public string Code { get; } = code.ThrowIfNullOrEmpty(nameof(code));
-}
 
-internal class GetEmailVerificationCodeQueryHandler(
-        IRepository repository) : IRequestHandler<GetEmailVerificationCodeQuery, EmailVerificationCode>
-{
-    private readonly IRepository _repository = repository ?? throw new ArgumentNullException(nameof(repository));
-
-    public async Task<EmailVerificationCode> Handle(
-        GetEmailVerificationCodeQuery request,
-        CancellationToken cancellationToken)
+    private class GetEmailVerificationCodeQueryHandler(
+            IRepository repository) : IRequestHandler<GetEmailVerificationCodeQuery, EmailVerificationCode>
     {
-        request.ThrowIfNull(nameof(request));
+        private readonly IRepository _repository = repository ?? throw new ArgumentNullException(nameof(repository));
 
-        EmailVerificationCode emailVerificationCode = await _repository
-        .GetAsync<EmailVerificationCode>(evc => evc.Email == request.Email && evc.Code == request.Code && evc.UsedAtUtc == null, cancellationToken);
+        public async Task<EmailVerificationCode> Handle(
+            GetEmailVerificationCodeQuery request,
+            CancellationToken cancellationToken)
+        {
+            request.ThrowIfNull(nameof(request));
 
-        return emailVerificationCode;
+            EmailVerificationCode emailVerificationCode = await _repository
+            .GetAsync<EmailVerificationCode>(evc => evc.Email == request.Email && evc.Code == request.Code && evc.UsedAtUtc == null, cancellationToken);
+
+            return emailVerificationCode;
+        }
     }
 }

@@ -1,6 +1,5 @@
 ﻿using CleanHr.AuthApi.Domain.Aggregates;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
 using TanvirArjel.ArgumentChecker;
 using TanvirArjel.EFCore.GenericRepository;
 

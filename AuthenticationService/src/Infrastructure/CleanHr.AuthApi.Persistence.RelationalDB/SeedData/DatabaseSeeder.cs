@@ -91,8 +91,6 @@ internal sealed class DatabaseSeeder(
         // Create Admin user
         Result<ApplicationUser> adminUserResult = await ApplicationUser.CreateAsync(
             applicationUserRepository,
-            "Admin",
-            "User",
             "admin@cleanhr.com",
             "Admin@123");
 
@@ -128,8 +126,6 @@ internal sealed class DatabaseSeeder(
         // Create Manager user
         Result<ApplicationUser> managerUserResult = await ApplicationUser.CreateAsync(
             applicationUserRepository,
-            "Manager",
-            "User",
             "manager@cleanhr.com",
             "Manager@123");
 
@@ -165,8 +161,6 @@ internal sealed class DatabaseSeeder(
         // Create HR user
         Result<ApplicationUser> hrUserResult = await ApplicationUser.CreateAsync(
             applicationUserRepository,
-            "HR",
-            "User",
             "hr@cleanhr.com",
             "Hr@123");
 
