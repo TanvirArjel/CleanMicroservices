@@ -9,4 +9,13 @@ namespace CleanHr.AuthApi.Features.User.Endpoints;
 [ApiExplorerSettings(GroupName = "User Endpoints")]
 public abstract class UserEndpointBase : ControllerBase
 {
+    protected ActionResult ValidationProblem(Dictionary<string, string> errors)
+    {
+        foreach (KeyValuePair<string, string> error in errors)
+        {
+            ModelState.AddModelError(error.Key, error.Value);
+        }
+
+        return ValidationProblem(ModelState);
+    }
 }

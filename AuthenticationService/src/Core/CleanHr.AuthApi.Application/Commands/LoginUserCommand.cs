@@ -1,9 +1,11 @@
+using System.Linq;
 using CleanHr.AuthApi.Application.Extensions;
 using CleanHr.AuthApi.Application.Services;
 using CleanHr.AuthApi.Domain;
 using CleanHr.AuthApi.Domain.Models;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using TanvirArjel.ArgumentChecker;
 using TanvirArjel.EFCore.GenericRepository;
@@ -51,9 +53,10 @@ public sealed class LoginUserCommand(string emailOrUserName, string password) : 
                     return Result<AuthenticationResult>.Failure("Password", "The password is required.");
                 }
 
-                ApplicationUser applicationUser = await _userManager.FindByEmailAsync(request.EmailOrUserName);
-
-                applicationUser ??= await _userManager.FindByNameAsync(request.EmailOrUserName);
+                string normalizedEmailOrUserName = request.EmailOrUserName.ToUpperInvariant();
+                ApplicationUser applicationUser = await _userManager.Users
+                                                    .Where(u => u.NormalizedEmail == normalizedEmailOrUserName || u.NormalizedUserName == normalizedEmailOrUserName)
+                                                    .FirstOrDefaultAsync(cancellationToken);
 
                 if (applicationUser == null)
                 {
@@ -85,7 +88,7 @@ public sealed class LoginUserCommand(string emailOrUserName, string password) : 
                 };
 
                 _logger.LogException(ex, "Exception occurred while processing login", logFields);
-                return Result<AuthenticationResult>.Failure("Exception", ex.Message);
+                return Result<AuthenticationResult>.Failure("Exception", "An error occurred while processing the login.");
             }
         }
     }

@@ -43,12 +43,7 @@ public class UserRegistrationEndpoint : UserEndpointBase
 
             if (result.IsSuccess == false)
             {
-                foreach (KeyValuePair<string, string> error in result.Errors)
-                {
-                    ModelState.AddModelError(error.Key, error.Value);
-                }
-
-                return ValidationProblem(ModelState);
+                return ValidationProblem(result.Errors);
             }
 
             return Ok();

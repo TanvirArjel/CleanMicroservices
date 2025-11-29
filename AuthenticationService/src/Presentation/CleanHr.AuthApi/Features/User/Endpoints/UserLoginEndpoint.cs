@@ -42,12 +42,7 @@ public class UserLoginEndpoint : UserEndpointBase
 
             if (result.IsSuccess == false)
             {
-                foreach (KeyValuePair<string, string> error in result.Errors)
-                {
-                    ModelState.AddModelError(error.Key, error.Value);
-                }
-
-                return ValidationProblem(ModelState);
+                return ValidationProblem(result.Errors);
             }
 
             AuthenticationResponse response = new()
@@ -67,7 +62,7 @@ public class UserLoginEndpoint : UserEndpointBase
             {
                 { "LoginModel", loginModel }
             };
-            _logger.LogException(exception, "An error occurred while processing the login for {@LoginModel}", fields);
+            _logger.LogException(exception, "An error occurred while processing the login.", fields);
             return StatusCode(StatusCodes.Status500InternalServerError);
         }
     }

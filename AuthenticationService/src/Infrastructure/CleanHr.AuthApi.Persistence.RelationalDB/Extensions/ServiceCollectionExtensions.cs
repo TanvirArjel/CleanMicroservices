@@ -37,6 +37,8 @@ public static class ServiceCollectionExtensions
             options.EnableSensitiveDataLogging(true);
             options.UseSqlServer(connectionString, builder =>
             {
+                // EnableStringComparisonTranslations
+                //builder.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
                 ////builder.EnableRetryOnFailure(3, TimeSpan.FromSeconds(10), null);
                 builder.MigrationsAssembly("CleanHr.AuthApi.Persistence.RelationalDB");
                 builder.MigrationsHistoryTable("__EFCoreMigrationsHistory", schema: "_Migration");
