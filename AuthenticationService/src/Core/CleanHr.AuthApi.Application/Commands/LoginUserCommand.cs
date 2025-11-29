@@ -1,97 +1,92 @@
+using CleanHr.AuthApi.Application.Extensions;
 using CleanHr.AuthApi.Application.Services;
 using CleanHr.AuthApi.Domain;
 using CleanHr.AuthApi.Domain.Models;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Logging;
 using TanvirArjel.ArgumentChecker;
 using TanvirArjel.EFCore.GenericRepository;
 
 namespace CleanHr.AuthApi.Application.Commands;
 
-public sealed class LoginUserCommand(string emailOrUserName, string password, bool rememberMe) : IRequest<Result<AuthenticationResult>>
+public sealed class LoginUserCommand(string emailOrUserName, string password) : IRequest<Result<AuthenticationResult>>
 {
-    public string EmailOrUserName { get; } = emailOrUserName.ThrowIfNullOrEmpty(nameof(emailOrUserName));
+    public string EmailOrUserName { get; } = emailOrUserName;
 
-    public string Password { get; } = password.ThrowIfNullOrEmpty(nameof(password));
-
-    public bool RememberMe { get; } = rememberMe;
+    public string Password { get; } = password;
 
     private class LoginUserCommandHandler : IRequestHandler<LoginUserCommand, Result<AuthenticationResult>>
     {
         private readonly UserManager<ApplicationUser> _userManager;
-        private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly IRepository _repository;
         private readonly JwtTokenManager _jwtTokenManager;
+        private readonly ILogger<LoginUserCommandHandler> _logger;
 
         public LoginUserCommandHandler(
             UserManager<ApplicationUser> userManager,
-            SignInManager<ApplicationUser> signInManager,
             IRepository repository,
-            JwtTokenManager jwtTokenManager)
+            JwtTokenManager jwtTokenManager,
+            ILogger<LoginUserCommandHandler> logger)
         {
             _userManager = userManager ?? throw new ArgumentNullException(nameof(userManager));
-            _signInManager = signInManager ?? throw new ArgumentNullException(nameof(signInManager));
             _repository = repository ?? throw new ArgumentNullException(nameof(repository));
             _jwtTokenManager = jwtTokenManager ?? throw new ArgumentNullException(nameof(jwtTokenManager));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
         public async Task<Result<AuthenticationResult>> Handle(LoginUserCommand request, CancellationToken cancellationToken)
         {
-            request.ThrowIfNull(nameof(request));
-
-            ApplicationUser applicationUser = await _userManager.FindByEmailAsync(request.EmailOrUserName);
-
-            applicationUser ??= await _userManager.FindByNameAsync(request.EmailOrUserName);
-
-            if (applicationUser == null)
+            try
             {
-                return Result<AuthenticationResult>.Failure("EmailOrUserName", "The email or username does not exist.");
-            }
+                request.ThrowIfNull(nameof(request));
 
-            Microsoft.AspNetCore.Identity.SignInResult signInResult = await _signInManager.PasswordSignInAsync(
-                request.EmailOrUserName,
-                request.Password,
-                isPersistent: request.RememberMe,
-                lockoutOnFailure: false);
-
-            if (signInResult.Succeeded)
-            {
-                // Record login using domain method
-                applicationUser.RecordLogin();
-                _repository.Update(applicationUser);
-                await _repository.SaveChangesAsync(cancellationToken);
-
-                // Generate JWT token
-                AuthenticationResult authResult = await _jwtTokenManager.GetTokenAsync(applicationUser.Id.ToString());
-                return Result<AuthenticationResult>.Success(authResult);
-            }
-
-            if (signInResult.IsNotAllowed)
-            {
-                if (!await _userManager.IsEmailConfirmedAsync(applicationUser))
+                if (string.IsNullOrWhiteSpace(request.EmailOrUserName))
                 {
-                    return Result<AuthenticationResult>.Failure("EmailOrUserName", "The email is not confirmed yet.");
+                    return Result<AuthenticationResult>.Failure("EmailOrUserName", "The email or username is required.");
                 }
 
-                if (!await _userManager.IsPhoneNumberConfirmedAsync(applicationUser))
+                if (string.IsNullOrWhiteSpace(request.Password))
                 {
-                    return Result<AuthenticationResult>.Failure(string.Empty, "The phone number is not confirmed yet.");
+                    return Result<AuthenticationResult>.Failure("Password", "The password is required.");
                 }
-            }
-            else if (signInResult.IsLockedOut)
-            {
-                return Result<AuthenticationResult>.Failure(string.Empty, "The account is locked.");
-            }
-            else if (signInResult.RequiresTwoFactor)
-            {
-                return Result<AuthenticationResult>.Failure(string.Empty, "Require two factor authentication.");
-            }
-            else
-            {
-                return Result<AuthenticationResult>.Failure("Password", "Password is incorrect.");
-            }
 
-            return Result<AuthenticationResult>.Failure(string.Empty, "Login failed.");
+                ApplicationUser applicationUser = await _userManager.FindByEmailAsync(request.EmailOrUserName);
+
+                applicationUser ??= await _userManager.FindByNameAsync(request.EmailOrUserName);
+
+                if (applicationUser == null)
+                {
+                    return Result<AuthenticationResult>.Failure("EmailOrUserName", "The email or username does not exist.");
+                }
+
+                bool isPasswordValid = await _userManager.CheckPasswordAsync(applicationUser, request.Password);
+
+                if (isPasswordValid)
+                {
+                    // Record login using domain method
+                    applicationUser.RecordLogin();
+                    _repository.Update(applicationUser);
+                    await _repository.SaveChangesAsync(cancellationToken);
+
+                    // Generate JWT token
+                    AuthenticationResult authResult = await _jwtTokenManager.GetTokenAsync(applicationUser.Id.ToString());
+                    return Result<AuthenticationResult>.Success(authResult);
+                }
+
+                return Result<AuthenticationResult>.Failure("Password", "The password is incorrect.");
+            }
+            catch (Exception ex)
+            {
+                var logFields = new Dictionary<string, object>
+                {
+                    { "EmailOrUserName", request.EmailOrUserName },
+                    { "Exception", ex.Message }
+                };
+
+                _logger.LogException(ex, "Exception occurred while processing login", logFields);
+                return Result<AuthenticationResult>.Failure("Exception", ex.Message);
+            }
         }
     }
 }

@@ -9,8 +9,6 @@ using TanvirArjel.ArgumentChecker;
 namespace CleanHr.AuthApi.Application.Commands;
 
 public sealed record RegisterUserCommand(
-    string FirstName,
-    string LastName,
     string Email,
     string Password) : IRequest<Result<Guid>>
 {
@@ -36,7 +34,7 @@ public sealed record RegisterUserCommand(
                 _userRepository,
                 request.Email,
                 request.Password,
-                userName: null); // Will default to email
+                request.Email); // Will default to email
 
             if (result.IsSuccess == false)
             {

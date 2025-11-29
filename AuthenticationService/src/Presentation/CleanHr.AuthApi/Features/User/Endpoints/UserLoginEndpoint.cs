@@ -7,10 +7,12 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Swashbuckle.AspNetCore.Annotations;
+using CleanHr.AuthApi.Application.Services;
 
 namespace CleanHr.AuthApi.Features.User.Endpoints;
 
 [ApiVersion("1.0")]
+[ApiController]
 public class UserLoginEndpoint : UserEndpointBase
 {
     private readonly IMediator _mediator;
@@ -31,12 +33,12 @@ public class UserLoginEndpoint : UserEndpointBase
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     [ProducesDefaultResponseType]
     [SwaggerOperation(Summary = "Post the required credentials to get the access token for the login.")]
-    public async Task<ActionResult<AuthenticationResponse>> Post(LoginModel loginModel)
+    public async Task<ActionResult<AuthenticationResponse>> Post([FromBody] LoginModel loginModel)
     {
         try
         {
-            LoginUserCommand command = new(loginModel.EmailOrUserName, loginModel.Password, loginModel.RememberMe);
-            Result<CleanHr.AuthApi.Application.Services.AuthenticationResult> result = await _mediator.Send(command);
+            LoginUserCommand command = new(loginModel.EmailOrUserName, loginModel.Password);
+            Result<AuthenticationResult> result = await _mediator.Send(command);
 
             if (result.IsSuccess == false)
             {

@@ -94,7 +94,7 @@ internal sealed class DatabaseSeeder(
             applicationUserRepository,
             "admin@cleanhr.com",
             "Admin@123",
-            userName: null);
+            "AdminUser");
 
         if (!adminUserResult.IsSuccess)
         {
@@ -130,7 +130,7 @@ internal sealed class DatabaseSeeder(
             applicationUserRepository,
             "manager@cleanhr.com",
             "Manager@123",
-            userName: null);
+            "ManagerUser");
 
         if (!managerUserResult.IsSuccess)
         {
@@ -166,7 +166,7 @@ internal sealed class DatabaseSeeder(
             applicationUserRepository,
             "hr@cleanhr.com",
             "Hr@123",
-            userName: null);
+            "HRUser");
 
         if (!hrUserResult.IsSuccess)
         {

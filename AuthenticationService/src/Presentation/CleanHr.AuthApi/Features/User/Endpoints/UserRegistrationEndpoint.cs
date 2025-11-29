@@ -36,8 +36,6 @@ public class UserRegistrationEndpoint : UserEndpointBase
         try
         {
             RegisterUserCommand command = new(
-                model.FirstName,
-                model.LastName,
                 model.Email,
                 model.Password);
 
@@ -53,7 +51,6 @@ public class UserRegistrationEndpoint : UserEndpointBase
                 return ValidationProblem(ModelState);
             }
 
-            //// await _applicationUserService.SendEmailVerificationCodeAsync(model.Email);
             return Ok();
         }
         catch (Exception exception)

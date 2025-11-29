@@ -79,7 +79,7 @@ internal static class Startup
             options.Conventions.Add(new RouteTokenTransformerConvention(new SlugifyParameterTransformer()));
         }).ConfigureApiBehaviorOptions(options =>
         {
-            options.SuppressModelStateInvalidFilter = true;
+            options.SuppressModelStateInvalidFilter = false;
         })
         .AddApplicationPart(typeof(Startup).Assembly);
 
@@ -87,7 +87,7 @@ internal static class Startup
 
         services.AddSwaggerGeneration("Clean HR Auth API", "CleanHr.AuthApi");
 
-        JwtConfig jwtConfig = new("SampleIdentity.com", "SampleIdentitySecretKey", 86400);
+        JwtConfig jwtConfig = new("SampleIdentity.com", "SampleIdentitySecretKeyNeedsToBeLongEnough", 86400);
         services.AddJwtAuthentication(jwtConfig);
 
         services.AddJwtTokenGenerator(jwtConfig);
