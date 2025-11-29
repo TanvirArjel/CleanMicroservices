@@ -59,7 +59,7 @@ public class ApplicationUser : IdentityUser<Guid>
         Guid userId = Guid.NewGuid();
 
         // Validate all inputs at once
-        ApplicationUserInput input = new(password, trimmedEmail, trimmedUserName ?? trimmedEmail);
+        ApplicationUserInput input = new(password, trimmedEmail, trimmedUserName);
         ApplicationUserInputValidator validator = new(userId, repository);
         ValidationResult validationResult = await validator.ValidateAsync(input);
 

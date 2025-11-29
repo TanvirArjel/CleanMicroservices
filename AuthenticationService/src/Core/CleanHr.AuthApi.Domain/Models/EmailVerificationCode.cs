@@ -23,6 +23,8 @@ public class EmailVerificationCode
 
     public Guid Id { get; private set; }
 
+    public Guid UserId { get; private set; }
+
     public string Email { get; private set; }
 
     public string Code { get; private set; }
@@ -31,15 +33,19 @@ public class EmailVerificationCode
 
     public DateTime? UsedAtUtc { get; private set; }
 
+    public ApplicationUser ApplicationUser { get; private set; }
+
     /// <summary>
     /// Factory method for creating a new EmailVerificationCode with validation.
     /// </summary>
     /// <param name="userManager"></param>
+    /// <param name="userId">The user ID.</param>
     /// <param name="email">The email address.</param>
     /// <param name="code">The verification code (6 digits).</param>
     /// <returns>Returns <see cref="Task{TResult}"/>.</returns>
     public static async Task<Result<EmailVerificationCode>> CreateAsync(
         UserManager<ApplicationUser> userManager,
+        Guid userId,
         string email,
         string code)
     {
@@ -47,6 +53,7 @@ public class EmailVerificationCode
 
         EmailVerificationCode verificationCode = new(Guid.NewGuid())
         {
+            UserId = userId,
             Email = email?.Trim(),
             Code = code?.Trim()
         };

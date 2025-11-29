@@ -54,7 +54,7 @@ public sealed class SendEmailVerificationCodeCommand(string email) : IRequest<Re
             int randomNumber = RandomNumberGenerator.GetInt32(0, 1000000);
             string verificationCode = randomNumber.ToString("D6", CultureInfo.InvariantCulture);
 
-            Result<EmailVerificationCode> result = await EmailVerificationCode.CreateAsync(_userManager, request.Email, verificationCode);
+            Result<EmailVerificationCode> result = await EmailVerificationCode.CreateAsync(_userManager, applicationUser.Id, request.Email, verificationCode);
 
             if (result.IsSuccess == false)
             {

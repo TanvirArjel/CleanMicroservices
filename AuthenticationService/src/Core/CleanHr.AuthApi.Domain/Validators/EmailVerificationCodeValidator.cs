@@ -14,6 +14,10 @@ internal class EmailVerificationCodeValidator : AbstractValidator<EmailVerificat
     {
         _userManager = userManager;
 
+        RuleFor(e => e.UserId)
+            .NotEmpty()
+            .WithMessage("The UserId is required.");
+
         RuleFor(e => e.Email)
             .SetValidator(new EmailValidator())
             .CustomAsync(ValidateEmailAsync);

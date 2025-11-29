@@ -13,6 +13,13 @@ public class EmailVerificationCodeConfiguration : IEntityTypeConfiguration<Email
         builder.HasKey(evc => evc.Id);
         builder.Property(evc => evc.Id).ValueGeneratedOnAdd();
 
+        builder.Property(evc => evc.UserId).IsRequired();
+        builder.HasOne(evc => evc.ApplicationUser)
+            .WithMany()
+            .HasForeignKey(evc => evc.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+        builder.HasIndex(evc => evc.UserId);
+
         builder.Property(evc => evc.Email).HasMaxLength(50).IsRequired();
         builder.Property(evc => evc.Code).HasMaxLength(6).IsFixedLength().IsRequired();
 
