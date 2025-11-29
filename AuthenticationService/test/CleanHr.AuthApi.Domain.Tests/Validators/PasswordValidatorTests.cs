@@ -96,4 +96,57 @@ public class PasswordValidatorTests
         // Assert
         result.IsValid.Should().BeTrue();
     }
+
+    [Theory]
+    [InlineData("Pass word1")]
+    [InlineData("Test Pass123")]
+    [InlineData("Valid Pass!@#")]
+    [InlineData(" Password1")]
+    [InlineData("Password1 ")]
+    [InlineData("Pass word")]
+    public void Validate_WithPasswordContainingWhitespace_ShouldReturnInvalid(string password)
+    {
+        // Act
+        ValidationResult result = _validator.Validate(password);
+
+        // Assert
+        result.IsValid.Should().BeFalse();
+        result.Errors.Should().Contain(e => e.ErrorMessage == "The Password cannot contain whitespace.");
+    }
+
+    [Theory]
+    [InlineData("Password123")]
+    [InlineData("Test@123")]
+    [InlineData("Valid!Pass#123")]
+    [InlineData("abcdefgh")]
+    [InlineData("ABCDEFGH")]
+    [InlineData("12345678")]
+    [InlineData("Pass@Word$2023")]
+    [InlineData("!@#$%^&*()_+-=")]
+    public void Validate_WithValidCharacters_ShouldReturnValid(string password)
+    {
+        // Act
+        ValidationResult result = _validator.Validate(password);
+
+        // Assert
+        result.IsValid.Should().BeTrue();
+    }
+
+    [Theory]
+    [InlineData("Пароль123")]     // Cyrillic characters
+    [InlineData("密码123456")]      // Chinese characters
+    [InlineData("パスワード123")]   // Japanese characters
+    [InlineData("Password123\n")]  // Newline character
+    [InlineData("Password123\t")]  // Tab character
+    [InlineData("Contraseña1")]    // Spanish ñ
+    public void Validate_WithInvalidCharacters_ShouldReturnInvalid(string password)
+    {
+        // Act
+        ValidationResult result = _validator.Validate(password);
+
+        // Assert
+        result.IsValid.Should().BeFalse();
+        result.Errors.Should().Contain(e => e.ErrorMessage == "The Password can only contain lowercase letters, uppercase letters, digits, and special characters.");
+    }
 }
+

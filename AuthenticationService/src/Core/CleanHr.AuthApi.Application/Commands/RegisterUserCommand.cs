@@ -35,7 +35,8 @@ public sealed record RegisterUserCommand(
             Result<ApplicationUser> result = await ApplicationUser.CreateAsync(
                 _userRepository,
                 request.Email,
-                request.Password);
+                request.Password,
+                userName: null); // Will default to email
 
             if (result.IsSuccess == false)
             {

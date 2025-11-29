@@ -1,12 +1,8 @@
 using System;
-using System.Linq.Expressions;
 using System.Threading.Tasks;
-using CleanHr.AuthApi.Domain.Models;
-using CleanHr.AuthApi.Domain.Repositories;
 using CleanHr.AuthApi.Domain.Validators;
 using FluentAssertions;
 using FluentValidation.Results;
-using Moq;
 
 namespace CleanHr.AuthApi.Domain.Tests.Validators;
 
@@ -16,8 +12,7 @@ public class EmailValidatorTests
     public async Task Validate_WithValidEmail_ShouldReturnValid()
     {
         // Arrange
-        Mock<IApplicationUserRepository> repositoryMock = new();
-        EmailValidator validator = new(Guid.NewGuid(), repositoryMock.Object);
+        EmailValidator validator = new();
         string email = "test@example.com";
 
         // Act
@@ -34,8 +29,7 @@ public class EmailValidatorTests
     public async Task Validate_WithEmptyEmail_ShouldReturnInvalid(string email)
     {
         // Arrange
-        Mock<IApplicationUserRepository> repositoryMock = new();
-        EmailValidator validator = new(Guid.NewGuid(), repositoryMock.Object);
+        EmailValidator validator = new();
 
         // Act
         ValidationResult result = await validator.ValidateAsync(email);
@@ -49,8 +43,7 @@ public class EmailValidatorTests
     public async Task Validate_WithNullEmail_ShouldThrowException()
     {
         // Arrange
-        Mock<IApplicationUserRepository> repositoryMock = new();
-        EmailValidator validator = new(Guid.NewGuid(), repositoryMock.Object);
+        EmailValidator validator = new();
 
         // Act
         ValidationResult result = await validator.ValidateAsync(null as string);
@@ -68,8 +61,7 @@ public class EmailValidatorTests
     public async Task Validate_WithInvalidEmailFormat_ShouldReturnInvalid(string email)
     {
         // Arrange
-        Mock<IApplicationUserRepository> repositoryMock = new();
-        EmailValidator validator = new(Guid.NewGuid(), repositoryMock.Object);
+        EmailValidator validator = new();
 
         // Act
         ValidationResult result = await validator.ValidateAsync(email);
@@ -83,8 +75,7 @@ public class EmailValidatorTests
     public async Task Validate_WithEmailTooLong_ShouldReturnInvalid()
     {
         // Arrange
-        Mock<IApplicationUserRepository> repositoryMock = new();
-        EmailValidator validator = new(Guid.NewGuid(), repositoryMock.Object);
+        EmailValidator validator = new();
         string email = "verylongemailaddressthatexceedsthelimit@example.com"; // More than 50 characters
 
         // Act
@@ -102,69 +93,7 @@ public class EmailValidatorTests
     public async Task Validate_WithValidEmailFormats_ShouldReturnValid(string email)
     {
         // Arrange
-        Mock<IApplicationUserRepository> repositoryMock = new();
-        EmailValidator validator = new(Guid.NewGuid(), repositoryMock.Object);
-
-        // Act
-        ValidationResult result = await validator.ValidateAsync(email);
-
-        // Assert
-        result.IsValid.Should().BeTrue();
-    }
-
-    [Fact]
-    public async Task Validate_WithUniqueEmail_ShouldReturnValid()
-    {
-        // Arrange
-        Mock<IApplicationUserRepository> repositoryMock = new();
-        repositoryMock
-            .Setup(r => r.ExistsAsync(It.IsAny<Expression<Func<ApplicationUser, bool>>>()))
-            .ReturnsAsync(false);
-
-        EmailValidator validator = new(Guid.NewGuid(), repositoryMock.Object);
-        string email = "unique@example.com";
-
-        // Act
-        ValidationResult result = await validator.ValidateAsync(email);
-
-        // Assert
-        result.IsValid.Should().BeTrue();
-        repositoryMock.Verify(r => r.ExistsAsync(It.IsAny<Expression<Func<ApplicationUser, bool>>>()), Times.Once);
-    }
-
-    [Fact]
-    public async Task Validate_WithDuplicateEmail_ShouldReturnInvalid()
-    {
-        // Arrange
-        Mock<IApplicationUserRepository> repositoryMock = new();
-        repositoryMock
-            .Setup(r => r.ExistsAsync(It.IsAny<Expression<Func<ApplicationUser, bool>>>()))
-            .ReturnsAsync(true);
-
-        EmailValidator validator = new(Guid.NewGuid(), repositoryMock.Object);
-        string email = "duplicate@example.com";
-
-        // Act
-        ValidationResult result = await validator.ValidateAsync(email);
-
-        // Assert
-        result.IsValid.Should().BeFalse();
-        result.Errors.Should().Contain(e => e.ErrorMessage == "A user already exists with the provided email.");
-        repositoryMock.Verify(r => r.ExistsAsync(It.IsAny<Expression<Func<ApplicationUser, bool>>>()), Times.Once);
-    }
-
-    [Fact]
-    public async Task Validate_WithSameUserEmail_ShouldReturnValid()
-    {
-        // Arrange
-        Guid userId = Guid.NewGuid();
-        Mock<IApplicationUserRepository> repositoryMock = new();
-        repositoryMock
-            .Setup(r => r.ExistsAsync(It.IsAny<Expression<Func<ApplicationUser, bool>>>()))
-            .ReturnsAsync(false); // Same user's email should not be considered duplicate
-
-        EmailValidator validator = new(userId, repositoryMock.Object);
-        string email = "user@example.com";
+        EmailValidator validator = new();
 
         // Act
         ValidationResult result = await validator.ValidateAsync(email);

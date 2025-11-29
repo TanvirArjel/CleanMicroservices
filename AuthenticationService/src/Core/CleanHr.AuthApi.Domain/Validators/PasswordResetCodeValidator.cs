@@ -4,7 +4,7 @@ using FluentValidation;
 
 namespace CleanHr.AuthApi.Domain.Validators;
 
-public class PasswordResetCodeValidator : AbstractValidator<PasswordResetCode>
+internal class PasswordResetCodeValidator : AbstractValidator<PasswordResetCode>
 {
     public PasswordResetCodeValidator()
     {
@@ -13,20 +13,14 @@ public class PasswordResetCodeValidator : AbstractValidator<PasswordResetCode>
             .WithMessage("The UserId is required.");
 
         RuleFor(p => p.Email)
-            .NotEmpty()
+            .NotNull()
             .WithMessage("The Email is required.")
-            .EmailAddress()
-            .WithMessage("The Email is not a valid email.")
-            .MaximumLength(50)
-            .WithMessage("The Email can't be more than 50 characters long.");
+            .SetValidator(new EmailValidator());
 
         RuleFor(p => p.Code)
-            .NotEmpty()
+            .NotNull()
             .WithMessage("The Code is required.")
-            .Length(6)
-            .WithMessage("The Code must be exactly 6 characters long.")
-            .Matches("^[0-9]{6}$")
-            .WithMessage("The Code must contain only digits.");
+            .SetValidator(new CodeValidator());
 
         RuleFor(p => p.SentAtUtc)
             .NotEmpty()

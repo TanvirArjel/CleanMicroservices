@@ -4,7 +4,7 @@ using FluentValidation;
 
 namespace CleanHr.AuthApi.Domain.Validators;
 
-public class RefreshTokenValidator : AbstractValidator<RefreshToken>
+internal class RefreshTokenValidator : AbstractValidator<RefreshToken>
 {
     public RefreshTokenValidator()
     {

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using CleanHr.AuthApi.Domain.Repositories;
@@ -49,7 +48,7 @@ public class ApplicationUser : IdentityUser<Guid>
         IApplicationUserRepository repository,
         string email,
         string password,
-        string userName = null)
+        string userName)
     {
         ArgumentNullException.ThrowIfNull(repository);
 
@@ -57,28 +56,16 @@ public class ApplicationUser : IdentityUser<Guid>
         string trimmedEmail = email?.Trim();
         string trimmedUserName = userName?.Trim();
 
-        // Validate password
-        PasswordValidator passwordValidator = new();
-        ValidationResult passwordValidationResult = await passwordValidator.ValidateAsync(password);
-        if (passwordValidationResult.IsValid == false)
-        {
-            return Result<ApplicationUser>.Failure(passwordValidationResult.ToDictionary());
-        }
-
         Guid userId = Guid.NewGuid();
 
-        EmailValidator emailValidator = new(userId, repository);
-        ValidationResult emailResult = await emailValidator.ValidateAsync(trimmedEmail);
-        if (emailResult.IsValid == false)
-        {
-            return Result<ApplicationUser>.Failure(emailResult.ToDictionary());
-        }
+        // Validate all inputs at once
+        ApplicationUserInput input = new(password, trimmedEmail, trimmedUserName ?? trimmedEmail);
+        ApplicationUserInputValidator validator = new(userId, repository);
+        ValidationResult validationResult = await validator.ValidateAsync(input);
 
-        UserNameValidator userNameValidator = new(userId, repository);
-        ValidationResult userNameResult = await userNameValidator.ValidateAsync(trimmedUserName ?? trimmedEmail);
-        if (userNameResult.IsValid == false)
+        if (validationResult.IsValid == false)
         {
-            return Result<ApplicationUser>.Failure(userNameResult.ToDictionary());
+            return Result<ApplicationUser>.Failure(validationResult.ToDictionary());
         }
 
         ApplicationUser user = new(userId)
@@ -99,12 +86,20 @@ public class ApplicationUser : IdentityUser<Guid>
         // Trim input before validation
         string trimmedEmail = email?.Trim();
 
-        EmailValidator emailValidator = new(Id, repository);
+        EmailValidator emailValidator = new();
         ValidationResult emailResult = await emailValidator.ValidateAsync(trimmedEmail);
 
         if (emailResult.IsValid == false)
         {
             return Result.Failure(emailResult.ToDictionary());
+        }
+
+        UniqueEmailValidator uniqueEmailValidator = new(Id, repository);
+        ValidationResult uniqueEmailResult = await uniqueEmailValidator.ValidateAsync(trimmedEmail);
+
+        if (uniqueEmailResult.IsValid == false)
+        {
+            return Result.Failure(uniqueEmailResult.ToDictionary());
         }
 
         Email = trimmedEmail;

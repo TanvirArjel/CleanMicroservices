@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Identity;
 
 namespace CleanHr.AuthApi.Domain.Validators;
 
-public class EmailVerificationCodeValidator : AbstractValidator<EmailVerificationCode>
+internal class EmailVerificationCodeValidator : AbstractValidator<EmailVerificationCode>
 {
     private readonly UserManager<ApplicationUser> _userManager;
     public EmailVerificationCodeValidator(UserManager<ApplicationUser> userManager)
@@ -15,15 +15,11 @@ public class EmailVerificationCodeValidator : AbstractValidator<EmailVerificatio
         _userManager = userManager;
 
         RuleFor(e => e.Email)
+            .SetValidator(new EmailValidator())
             .CustomAsync(ValidateEmailAsync);
 
         RuleFor(e => e.Code)
-            .NotEmpty()
-            .WithMessage("The Code is required.")
-            .Length(6)
-            .WithMessage("The Code must be exactly 6 characters long.")
-            .Matches("^[0-9]{6}$")
-            .WithMessage("The Code must contain only digits.");
+            .SetValidator(new CodeValidator());
 
         RuleFor(e => e.SentAtUtc)
             .NotEmpty()
@@ -50,14 +46,5 @@ public class EmailVerificationCodeValidator : AbstractValidator<EmailVerificatio
             context.AddFailure("Email", "The email is already confirmed.");
             return;
         }
-
-        // HasUserActiveEmailVerificationCodeQuery query = new(email);
-
-        // bool isExists = await _mediator.Send(query, cancellationToken);
-
-        // if (isExists)
-        // {
-        //     context.AddFailure("email", "You already have an active code. Please wait! You may receive the code in your email. If not, please try again after sometimes.");
-        // }
     }
 }

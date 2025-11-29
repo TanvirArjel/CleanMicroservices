@@ -93,7 +93,8 @@ internal sealed class DatabaseSeeder(
         Result<ApplicationUser> adminUserResult = await ApplicationUser.CreateAsync(
             applicationUserRepository,
             "admin@cleanhr.com",
-            "Admin@123");
+            "Admin@123",
+            userName: null);
 
         if (!adminUserResult.IsSuccess)
         {
@@ -128,7 +129,8 @@ internal sealed class DatabaseSeeder(
         Result<ApplicationUser> managerUserResult = await ApplicationUser.CreateAsync(
             applicationUserRepository,
             "manager@cleanhr.com",
-            "Manager@123");
+            "Manager@123",
+            userName: null);
 
         if (!managerUserResult.IsSuccess)
         {
@@ -163,7 +165,8 @@ internal sealed class DatabaseSeeder(
         Result<ApplicationUser> hrUserResult = await ApplicationUser.CreateAsync(
             applicationUserRepository,
             "hr@cleanhr.com",
-            "Hr@123");
+            "Hr@123",
+            userName: null);
 
         if (!hrUserResult.IsSuccess)
         {

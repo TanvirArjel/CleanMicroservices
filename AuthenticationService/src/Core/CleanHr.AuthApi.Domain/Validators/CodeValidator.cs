@@ -4,17 +4,17 @@ using FluentValidation.Results;
 
 namespace CleanHr.AuthApi.Domain.Validators;
 
-internal class EmailValidator : AbstractValidator<string>
+internal class CodeValidator : AbstractValidator<string>
 {
-    public EmailValidator()
+    public CodeValidator()
     {
-        RuleFor(email => email)
+        RuleFor(code => code)
             .NotEmpty()
-            .WithMessage("The Email is required.")
-            .EmailAddress()
-            .WithMessage("The Email is not a valid email.")
-            .MaximumLength(50)
-            .WithMessage("The Email can't be more than 50 characters long.");
+            .WithMessage("The Code is required.")
+            .Length(6)
+            .WithMessage("The Code must be exactly 6 characters long.")
+            .Matches("^[0-9]{6}$")
+            .WithMessage("The Code must contain only digits.");
     }
 
     protected override bool PreValidate(ValidationContext<string> context, ValidationResult result)
@@ -24,7 +24,7 @@ internal class EmailValidator : AbstractValidator<string>
 
         if (context.InstanceToValidate == null)
         {
-            result.Errors.Add(new ValidationFailure("Email", "The Email cannot be null."));
+            result.Errors.Add(new ValidationFailure("Code", "The Code cannot be null."));
             return false;
         }
 

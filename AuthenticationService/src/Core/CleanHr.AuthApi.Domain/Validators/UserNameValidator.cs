@@ -7,7 +7,7 @@ using FluentValidation.Results;
 
 namespace CleanHr.AuthApi.Domain.Validators;
 
-public sealed class UserNameValidator : AbstractValidator<string>
+internal class UserNameValidator : AbstractValidator<string>
 {
     public UserNameValidator(Guid userId, IApplicationUserRepository userRepository)
     {
