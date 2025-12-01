@@ -140,6 +140,9 @@ dotnet_diagnostic.IDE0290.severity = none
 csharp_style_expression_bodied_lambdas = true:silent
 csharp_style_expression_bodied_local_functions = false:silent
 
+# CA1873: Avoid potentially expensive logging
+dotnet_diagnostic.CA1873.severity = none
+
 [*.{cs,vb}]
 #### Naming styles ####
 

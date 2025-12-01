@@ -1,5 +1,6 @@
 ﻿using System.Text;
 using CleanHr.AuthApi.Application.Infrastructures;
+using CleanHr.AuthApi.Application.Telemetry;
 using CleanHr.AuthApi.Constants;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
@@ -105,6 +106,7 @@ internal static class ServiceCollectionExtensions
 					serviceName: configuration.GetValue<string>("OpenTelemetry:ServiceName") ?? "CleanHrApi",
 					serviceVersion: typeof(ServiceCollectionExtensions).Assembly.GetName().Version?.ToString() ?? "1.0.0"))
 			.WithTracing(tracing => tracing
+				.AddSource(ApplicationDiagnostics.ActivitySourceName)
 				.AddAspNetCoreInstrumentation(options =>
 				{
 					options.RecordException = true;
@@ -112,6 +114,16 @@ internal static class ServiceCollectionExtensions
 					{
 						// Don't trace health check endpoints
 						return !httpContext.Request.Path.StartsWithSegments("/healthz", StringComparison.OrdinalIgnoreCase);
+					};
+					options.EnrichWithHttpRequest = (activity, httpRequest) =>
+					{
+						activity.SetTag("http.request.content_type", httpRequest.ContentType);
+						activity.SetTag("http.request.content_length", httpRequest.ContentLength);
+					};
+					options.EnrichWithHttpResponse = (activity, httpResponse) =>
+					{
+						activity.SetTag("http.response.content_type", httpResponse.ContentType);
+						activity.SetTag("http.response.content_length", httpResponse.ContentLength);
 					};
 				})
 				.AddHttpClientInstrumentation(options =>
@@ -122,6 +134,7 @@ internal static class ServiceCollectionExtensions
 				{
 					options.SetDbStatementForText = true;
 					options.RecordException = true;
+					options.EnableConnectionLevelAttributes = true;
 				})
 				.AddOtlpExporter(otlpOptions =>
 				{

@@ -2,6 +2,7 @@ using System.Globalization;
 using Serilog;
 using Serilog.Events;
 using Serilog.Sinks.Grafana.Loki;
+using Serilog.Enrichers.Span;
 
 namespace CleanHr.AuthApi.Extensions;
 
@@ -16,6 +17,7 @@ internal static class SerilogConfiguration
             .MinimumLevel.Override("Microsoft.EntityFrameworkCore", LogEventLevel.Information)
             .MinimumLevel.Override("System", LogEventLevel.Warning)
             .Enrich.FromLogContext()
+            .Enrich.WithSpan()
             .Enrich.WithEnvironmentName()
             .Enrich.WithMachineName()
             .Enrich.WithThreadId()
@@ -25,11 +27,18 @@ internal static class SerilogConfiguration
                 formatProvider: CultureInfo.InvariantCulture)
             .WriteTo.GrafanaLoki(
                 "http://localhost:3100",
-                labels: new List<LokiLabel>
-                {
+                labels:
+                [
                     new LokiLabel { Key = "app", Value = "authentication-service" },
                     new LokiLabel { Key = "environment", Value = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production" }
-                })
+                ],
+                propertiesAsLabels: new[]
+                {
+                    "TraceId",
+                    "SpanId",
+                },
+                //textFormatter: new Serilog.Formatting.Compact.RenderedCompactJsonFormatter(),
+                leavePropertiesIntact: true)
             .CreateLogger();
     }
 }

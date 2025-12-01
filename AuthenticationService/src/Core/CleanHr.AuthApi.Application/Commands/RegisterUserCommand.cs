@@ -10,7 +10,8 @@ namespace CleanHr.AuthApi.Application.Commands;
 
 public sealed record RegisterUserCommand(
     string Email,
-    string Password) : IRequest<Result<Guid>>
+    string Password,
+    string ConfirmPassword) : IRequest<Result<Guid>>
 {
     private class RegisterUserCommandHandler : IRequestHandler<RegisterUserCommand, Result<Guid>>
     {
@@ -28,6 +29,11 @@ public sealed record RegisterUserCommand(
         public async Task<Result<Guid>> Handle(RegisterUserCommand request, CancellationToken cancellationToken)
         {
             request.ThrowIfNull(nameof(request));
+
+            if (request.Password != request.ConfirmPassword)
+            {
+                return Result<Guid>.Failure("ConfirmPassword", "The password and confirmation password do not match.");
+            }
 
             // Create user through domain factory (with password validation)
             Result<ApplicationUser> result = await ApplicationUser.CreateAsync(

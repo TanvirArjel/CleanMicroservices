@@ -37,7 +37,8 @@ public class UserRegistrationEndpoint : UserEndpointBase
         {
             RegisterUserCommand command = new(
                 model.Email,
-                model.Password);
+                model.Password,
+                model.ConfirmPassword);
 
             Result<Guid> result = await _mediator.Send(command);
 

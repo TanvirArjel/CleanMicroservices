@@ -69,6 +69,8 @@ internal static class Startup
 
         services.AddCaching();
 
+        services.AddHttpContextAccessor();
+
         services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<LoginUserCommand>());
 
         services.AddServicesOfAllTypes("CleanHr");
