@@ -94,9 +94,9 @@ public class ExternalLoginSignInCallbackEndpoint : ExternalLoginEndpointBase
 
             _logger.LogWithLevel(LogLevel.Information, $"User logged in with {externalLoginInfo.LoginProvider} provider.");
 
-            CleanHr.AuthApi.Application.Services.AuthenticationResult authResult = await _jwtTokenManager.GetTokenAsync(applicationUser);
-            string redirectUrl = QueryHelpers.AddQueryString(ClientLoginUrl, "jwt", authResult.AccessToken);
-            redirectUrl = QueryHelpers.AddQueryString(redirectUrl, "refreshToken", authResult.RefreshToken);
+            var authResult = await _jwtTokenManager.GetTokenAsync(applicationUser);
+            string redirectUrl = QueryHelpers.AddQueryString(ClientLoginUrl, "jwt", authResult.Value.AccessToken);
+            redirectUrl = QueryHelpers.AddQueryString(redirectUrl, "refreshToken", authResult.Value.RefreshToken);
             return Redirect(redirectUrl);
         }
 

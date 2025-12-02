@@ -1,18 +1,22 @@
+using System.Diagnostics;
 using System.Globalization;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
-using CleanHr.AuthApi.Application.Commands;
+using CleanHr.AuthApi.Application.Extensions;
 using CleanHr.AuthApi.Application.Infrastructures;
 using CleanHr.AuthApi.Application.Queries;
+using CleanHr.AuthApi.Application.Telemetry;
 using CleanHr.AuthApi.Domain;
 using CleanHr.AuthApi.Domain.Models;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
-using TanvirArjel.ArgumentChecker;
+using Serilog.Context;
+using TanvirArjel.EFCore.GenericRepository;
 
 namespace CleanHr.AuthApi.Application.Services;
 
@@ -27,35 +31,91 @@ public class JwtTokenManager
 {
     private readonly JwtConfig _jwtConfig;
     private readonly UserManager<ApplicationUser> _userManager;
+    private readonly IRepository _repository;
     private readonly IMediator _mediator;
+    private readonly ILogger<JwtTokenManager> _logger;
 
     public JwtTokenManager(
         JwtConfig jwtConfig,
         UserManager<ApplicationUser> userManager,
-        IMediator mediator)
+        IRepository repository,
+        IMediator mediator,
+        ILogger<JwtTokenManager> logger)
     {
         _jwtConfig = jwtConfig ?? throw new ArgumentNullException(nameof(jwtConfig));
         _userManager = userManager ?? throw new ArgumentNullException(nameof(userManager));
+        _repository = repository ?? throw new ArgumentNullException(nameof(repository));
         _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public async Task<AuthenticationResult> GetTokenAsync(string userId)
+    public async Task<Result<AuthenticationResult>> GetTokenAsync(string userId)
     {
-        userId.ThrowIfNullOrEmpty(nameof(userId));
+        using var activity = ApplicationDiagnostics.ActivitySource.StartActivity("GetJwtToken", ActivityKind.Internal);
+        activity?.SetTag("user.id", userId);
+        EnrichLogContext(activity);
+
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            activity.SetStatus(ActivityStatusCode.Error, "UserId is null or empty");
+            _logger.LogWarning("UserId is null or empty in GetTokenAsync");
+            return Result<AuthenticationResult>.Failure("UserId cannot be null or empty.");
+        }
 
         ApplicationUser user = await _userManager.FindByIdAsync(userId);
 
-        if (user == null)
+        var result = await GetTokenAsync(user);
+
+        if (result.IsSuccess)
         {
-            throw new InvalidOperationException($"User with ID {userId} not found.");
+            activity.SetStatus(ActivityStatusCode.Ok, "Token generated successfully");
+        }
+        else
+        {
+            activity.SetStatus(ActivityStatusCode.Error, "Failed to generate token");
         }
 
-        return await GetTokenAsync(user);
+        return result;
     }
 
-    public async Task<AuthenticationResult> GetTokenAsync(string accessToken, string refreshToken)
+    public async Task<Result<AuthenticationResult>> GetTokenAsync(ApplicationUser user)
     {
-        accessToken.ThrowIfNull(nameof(accessToken));
+        using var activity = ApplicationDiagnostics.ActivitySource.StartActivity("GetJwtToken", ActivityKind.Internal);
+        activity?.SetTag("user.id", user?.Id.ToString());
+        EnrichLogContext(activity);
+
+        var result = await GetTokenAsync(user, oldRefreshToken: null);
+
+        if (result.IsSuccess)
+        {
+            activity.SetStatus(ActivityStatusCode.Ok, "Token generated successfully");
+        }
+        else
+        {
+            activity.SetStatus(ActivityStatusCode.Error, "Failed to generate token");
+        }
+
+        return result;
+    }
+
+    public async Task<Result<AuthenticationResult>> GetTokenAsync(string accessToken, string refreshToken)
+    {
+        using var activity = ApplicationDiagnostics.ActivitySource.StartActivity(
+               "GenerateJwtToken",
+               ActivityKind.Internal);
+        EnrichLogContext(activity);
+
+        if (string.IsNullOrWhiteSpace(accessToken))
+        {
+            _logger.LogWarning("Access token is null or empty in GetTokenAsync");
+            return Result<AuthenticationResult>.Failure("Access token cannot be null or empty.");
+        }
+
+        if (string.IsNullOrWhiteSpace(refreshToken))
+        {
+            _logger.LogWarning("Refresh token is null or empty in GetTokenAsync");
+            return Result<AuthenticationResult>.Failure("Refresh token cannot be null or empty.");
+        }
 
         ClaimsPrincipal claimsPrincipal = ParseExpiredToken(accessToken);
         string userId = claimsPrincipal.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -71,74 +131,94 @@ public class JwtTokenManager
 
         ApplicationUser user = await _userManager.FindByIdAsync(userId);
 
-        // SECURITY: Always rotate refresh token when used
-        // This generates a new refresh token and invalidates the old one
-        return await GetTokenAsync(user, oldRefreshToken: refreshToken);
-    }
+        var result = await GetTokenAsync(user, oldRefreshToken: refreshToken);
 
-    public async Task<AuthenticationResult> GetTokenAsync(ApplicationUser user, string oldRefreshToken = null)
-    {
-        ArgumentNullException.ThrowIfNull(user);
-
-        IList<string> roles = await _userManager.GetRolesAsync(user).ConfigureAwait(false);
-
-        string newToken = GetRefreshToken();
-        RefreshToken refreshToken;
-
-        if (oldRefreshToken != null)
+        if (result.IsSuccess)
         {
-            // Token rotation: revoke old token and create new one
-            UpdateRefreshTokenCommand updateRefreshTokenCommand = new(user.Id, oldRefreshToken, newToken);
-            Result<RefreshToken> updateResult = await _mediator.Send(updateRefreshTokenCommand);
-
-            if (updateResult.IsSuccess == false)
-            {
-                throw new InvalidOperationException("Failed to rotate refresh token.");
-            }
-
-            refreshToken = updateResult.Value;
+            activity.SetStatus(ActivityStatusCode.Ok, "Token generated successfully");
         }
         else
         {
-            // First-time login: create new refresh token
-            StoreRefreshTokenCommand storeRefreshTokenCommand = new(user.Id, newToken);
-            Result<RefreshToken> storeResult = await _mediator.Send(storeRefreshTokenCommand);
-
-            if (storeResult.IsSuccess == false)
-            {
-                throw new InvalidOperationException("Failed to store refresh token.");
-            }
-
-            refreshToken = storeResult.Value;
+            activity.SetStatus(ActivityStatusCode.Error, "Failed to generate token");
         }
 
-        DateTime utcNow = DateTime.Now;
+        return result;
+    }
 
-        List<Claim> claims =
-        [
-            new Claim(JwtRegisteredClaimNames.NameId, user.Id.ToString()),
-            new Claim(JwtRegisteredClaimNames.Name, user.UserName),
-            new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
-            new Claim(JwtRegisteredClaimNames.Sid, user.Id.ToString()),
-            new Claim(JwtRegisteredClaimNames.UniqueName, user.UserName),
-            new Claim(JwtRegisteredClaimNames.Email, user.Email),
-            new Claim(JwtRegisteredClaimNames.GivenName, user.UserName),
-            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-            new Claim(JwtRegisteredClaimNames.Iat, utcNow.ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture)),
-        ];
-
-        if (roles != null && roles.Any())
+    private async Task<Result<AuthenticationResult>> GetTokenAsync(ApplicationUser user, string oldRefreshToken)
+    {
+        try
         {
-            foreach (string item in roles)
+            if (user == null)
             {
-                claims.Add(new Claim(ClaimTypes.Role, item));
+                _logger.LogWarning("User is null in GetTokenAsync");
+                return Result<AuthenticationResult>.Failure("User cannot be null.");
             }
-        }
 
-        SymmetricSecurityKey signingKey = new(Encoding.UTF8.GetBytes(_jwtConfig.Key));
-        SigningCredentials signingCredentials = new(signingKey, SecurityAlgorithms.HmacSha256);
+            RefreshToken refreshToken;
 
-        JwtSecurityToken jwt = new(
+            if (oldRefreshToken != null)
+            {
+                Result<RefreshToken> updateResult = await RevokeOldAndCreateNewTokenAsync(
+                    user.Id,
+                    oldRefreshToken,
+                    CancellationToken.None);
+
+                refreshToken = updateResult.Value;
+
+                if (updateResult.IsSuccess == false)
+                {
+                    _logger.LogWarning("Failed to rotate refresh token for user {UserId}", user.Id);
+                    return Result<AuthenticationResult>.Failure(updateResult.Errors);
+                }
+            }
+            else
+            {
+                // First-time login: create new refresh token
+                Result<RefreshToken> storeResult = await CreateNewRefreshTokenAsync(
+                    user.Id,
+                    CancellationToken.None);
+
+                if (storeResult.IsSuccess == false)
+                {
+                    _logger.LogWarning("Failed to create new refresh token for user {UserId}", user.Id);
+                    return Result<AuthenticationResult>.Failure(storeResult.Errors);
+                }
+
+                refreshToken = storeResult.Value;
+            }
+
+            DateTime utcNow = DateTime.Now;
+
+            List<Claim> claims =
+            [
+                new Claim(JwtRegisteredClaimNames.NameId, user.Id.ToString()),
+                new Claim(JwtRegisteredClaimNames.Name, user.UserName),
+                new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
+                new Claim(JwtRegisteredClaimNames.Sid, user.Id.ToString()),
+                new Claim(JwtRegisteredClaimNames.UniqueName, user.UserName),
+                new Claim(JwtRegisteredClaimNames.Email, user.Email),
+                new Claim(JwtRegisteredClaimNames.GivenName, user.UserName),
+                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+                new Claim(JwtRegisteredClaimNames.Iat, utcNow.ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture)),
+            ];
+
+            IList<string> roles = await _userManager.GetRolesAsync(user).ConfigureAwait(false);
+
+            if (roles != null && roles.Any())
+            {
+                foreach (string item in roles)
+                {
+                    claims.Add(new Claim(ClaimTypes.Role, item));
+                }
+            }
+
+            _logger.LogDebug("Generating JWT token for user {UserId}", user.Id);
+
+            SymmetricSecurityKey signingKey = new(Encoding.UTF8.GetBytes(_jwtConfig.Key));
+            SigningCredentials signingCredentials = new(signingKey, SecurityAlgorithms.HmacSha256);
+
+            JwtSecurityToken jwt = new(
             signingCredentials: signingCredentials,
             claims: claims,
             notBefore: utcNow,
@@ -146,19 +226,31 @@ public class JwtTokenManager
             audience: _jwtConfig.Issuer,
             issuer: _jwtConfig.Issuer);
 
-        JwtSecurityTokenHandler jwtSecurityTokenHandler = new();
-        jwtSecurityTokenHandler.OutboundClaimTypeMap.Clear();
-        string newAccessToken = jwtSecurityTokenHandler.WriteToken(jwt);
+            JwtSecurityTokenHandler jwtSecurityTokenHandler = new();
+            jwtSecurityTokenHandler.OutboundClaimTypeMap.Clear();
+            string newAccessToken = jwtSecurityTokenHandler.WriteToken(jwt);
 
-        return new AuthenticationResult
+            _logger.LogDebug("JWT token generated successfully for user {UserId}", user.Id);
+
+            return Result<AuthenticationResult>.Success(new AuthenticationResult
+            {
+                AccessToken = newAccessToken,
+                RefreshToken = refreshToken.Token,
+                ExpiresIn = _jwtConfig.TokenLifeTime
+            });
+        }
+        catch (Exception ex)
         {
-            AccessToken = newAccessToken,
-            RefreshToken = refreshToken.Token,
-            ExpiresIn = _jwtConfig.TokenLifeTime
-        };
+            var logFields = new Dictionary<string, object>
+            {
+                { "UserId", user?.Id.ToString() }
+            };
+            _logger.LogException(ex, "Error generating JWT token for user {UserId}", logFields);
+            return Result<AuthenticationResult>.Failure("Exception while generating JWT token.");
+        }
     }
 
-    public ClaimsPrincipal ParseExpiredToken(string accessToken)
+    private ClaimsPrincipal ParseExpiredToken(string accessToken)
     {
 #pragma warning disable CA5404 // Do not disable token validation checks
         TokenValidationParameters tokenValidationParameters = new()
@@ -184,7 +276,104 @@ public class JwtTokenManager
         return principal;
     }
 
-    private string GetRefreshToken()
+    private async Task<Result<RefreshToken>> RevokeOldAndCreateNewTokenAsync(
+        Guid userId,
+        string oldToken,
+        CancellationToken cancellationToken)
+    {
+        _logger.LogInformation("Rotating refresh token for user {UserId}", userId);
+
+        // Find the old refresh token
+        RefreshToken oldRefreshToken = await _repository.GetAsync<RefreshToken>(
+            rt => rt.UserId == userId && rt.Token == oldToken,
+            cancellationToken);
+
+        if (oldRefreshToken == null)
+        {
+            _logger.LogWarning("Refresh token not found for user {UserId}", userId);
+            return Result<RefreshToken>.Failure($"The RefreshToken does not exist for user: {userId}.");
+        }
+
+        // SECURITY: Detect token reuse attack with device isolation
+        // If token has already been used, this is a security breach - revoke only this device's token family
+        if (oldRefreshToken.IsUsed())
+        {
+            _logger.LogWarning(
+                "SECURITY ALERT: Refresh token reuse detected for user {UserId}. Token {TokenId} (Family: {TokenFamilyId}) was already used at {UsedAt}. Revoking token family.",
+                userId,
+                oldRefreshToken.Id,
+                oldRefreshToken.TokenFamilyId,
+                oldRefreshToken.UsedAtUtc);
+
+            // Revoke only tokens in the same family (device isolation - don't affect other devices)
+            List<RefreshToken> familyTokens = await _repository.GetListAsync<RefreshToken>(
+                rt => rt.TokenFamilyId == oldRefreshToken.TokenFamilyId && !rt.RevokedAtUtc.HasValue,
+                cancellationToken);
+
+            foreach (RefreshToken token in familyTokens)
+            {
+                token.Revoke();
+                _repository.Update(token);
+            }
+
+            await _repository.SaveChangesAsync(cancellationToken);
+
+            return Result<RefreshToken>.Failure("Token reuse detected. This device's session has been revoked for security. Please login again.");
+        }
+
+        // Mark old token as used (one-time use enforcement)
+        oldRefreshToken.MarkAsUsed();
+
+        // Also revoke it for extra safety
+        oldRefreshToken.Revoke();
+        _repository.Update(oldRefreshToken);
+
+        // Create new refresh token in the SAME family (token rotation within device/session)
+        string newToken = GenerateRefreshToken();
+        Result<RefreshToken> createResult = await RefreshToken.CreateAsync(
+            userId,
+            newToken,
+            oldRefreshToken.TokenFamilyId); // Inherit family ID for rotation chain
+
+        if (createResult.IsSuccess == false)
+        {
+            _logger.LogWarning("Failed to create new refresh token for user {UserId}", userId);
+            return createResult;
+        }
+
+        RefreshToken newRefreshToken = createResult.Value;
+        _repository.Add(newRefreshToken);
+
+        await _repository.SaveChangesAsync(cancellationToken);
+        _logger.LogInformation("Refresh token rotated successfully for user {UserId}", userId);
+
+        return Result<RefreshToken>.Success(newRefreshToken);
+    }
+
+    private async Task<Result<RefreshToken>> CreateNewRefreshTokenAsync(
+        Guid userId,
+        CancellationToken cancellationToken)
+    {
+        _logger.LogInformation("Creating new refresh token for user {UserId}", userId);
+        string token = GenerateRefreshToken();
+        Result<RefreshToken> result = await RefreshToken.CreateAsync(userId, token);
+
+        if (result.IsSuccess == false)
+        {
+            _logger.LogWarning("Failed to create new refresh token for user {UserId}", userId);
+            return result;
+        }
+
+        RefreshToken refreshToken = result.Value;
+
+        _repository.Add(refreshToken);
+        await _repository.SaveChangesAsync(cancellationToken);
+        _logger.LogInformation("New refresh token created successfully for user {UserId}", userId);
+
+        return Result<RefreshToken>.Success(refreshToken);
+    }
+
+    private string GenerateRefreshToken()
     {
         byte[] randomNumber = new byte[32];
         using RandomNumberGenerator randomNumberGenerator = RandomNumberGenerator.Create();
@@ -193,5 +382,17 @@ public class JwtTokenManager
         string refreshToken = Convert.ToBase64String(randomNumber);
 
         return refreshToken;
+    }
+
+    private static void EnrichLogContext(Activity activity)
+    {
+        if (activity == null)
+        {
+            return;
+        }
+
+        LogContext.PushProperty("TraceId", activity.TraceId.ToString());
+        LogContext.PushProperty("SpanId", activity.SpanId.ToString());
+        LogContext.PushProperty("ParentId", activity.ParentSpanId.ToString());
     }
 }

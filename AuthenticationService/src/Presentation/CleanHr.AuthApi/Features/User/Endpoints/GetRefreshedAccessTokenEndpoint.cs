@@ -18,16 +18,13 @@ public class GetRefreshedAccessTokenEndpoint(
     [SwaggerOperation(Summary = "Get a new access token for user by posting user's expired access token and refresh token.")]
     public async Task<ActionResult<AuthenticationResponse>> Post(TokenRefreshModel model)
     {
-        AuthenticationResult result = await tokenManager.GetTokenAsync(model.AccessToken, model.RefreshToken);
+        var result = await tokenManager.GetTokenAsync(model.AccessToken, model.RefreshToken);
 
-        AuthenticationResponse response = new()
+        if (result.IsSuccess == false)
         {
-            AccessToken = result.AccessToken,
-            RefreshToken = result.RefreshToken,
-            ExpiresIn = result.ExpiresIn,
-            TokenType = "Bearer"
-        };
+            return BadRequest(result.Errors);
+        }
 
-        return Ok(response);
+        return Ok(result.Value);
     }
 }

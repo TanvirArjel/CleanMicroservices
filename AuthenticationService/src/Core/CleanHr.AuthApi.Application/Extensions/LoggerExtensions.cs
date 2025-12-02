@@ -40,6 +40,11 @@ public static class LoggerExtensions
     {
         ArgumentNullException.ThrowIfNull(logger);
 
+        fields ??= [];
+        fields.Add("ExceptionMessage", exception?.Message);
+        fields.Add("ExceptionType", exception?.GetType().FullName ?? string.Empty);
+        fields.Add("StackTrace", exception?.StackTrace ?? string.Empty);
+
         if (logger.IsEnabled(LogLevel.Error))
         {
             logger.Log(LogLevel.Error, exception, message, fields);

@@ -1,10 +1,14 @@
 using System;
+using System.Diagnostics;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
+using CleanHr.AuthApi.Application.Telemetry;
 using CleanHr.AuthApi.Domain.Models;
 using CleanHr.AuthApi.Domain.Repositories;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using Serilog.Context;
 using TanvirArjel.Extensions.Microsoft.DependencyInjection;
 
 namespace CleanHr.AuthApi.Persistence.RelationalDB.Repositories;
@@ -13,10 +17,12 @@ namespace CleanHr.AuthApi.Persistence.RelationalDB.Repositories;
 internal sealed class ApplicationUserRepository : IApplicationUserRepository
 {
     private readonly CleanHrDbContext _dbContext;
+    private readonly ILogger<ApplicationUserRepository> _logger;
 
-    public ApplicationUserRepository(CleanHrDbContext dbContext)
+    public ApplicationUserRepository(CleanHrDbContext dbContext, ILogger<ApplicationUserRepository> logger)
     {
         _dbContext = dbContext;
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     public async Task<bool> ExistsAsync(Expression<Func<ApplicationUser, bool>> predicate)
@@ -39,5 +45,53 @@ internal sealed class ApplicationUserRepository : IApplicationUserRepository
     {
         return await _dbContext.Set<ApplicationUser>()
             .FirstOrDefaultAsync(u => u.UserName == userName);
+    }
+
+    public async Task<ApplicationUser> GetByEmailOrUserNameAsync(string emailOrUserName)
+    {
+        using var activity = ApplicationDiagnostics.ActivitySource.StartActivity(
+               "GetByEmailOrUserName",
+               ActivityKind.Internal);
+        activity.SetTag("query.identifier", emailOrUserName);
+
+        EnrichLogContext(activity);
+
+        try
+        {
+            string normalizedEmailOrUserName = emailOrUserName.ToUpperInvariant();
+            ApplicationUser user = await _dbContext.Set<ApplicationUser>()
+                .Where(u => u.NormalizedEmail == normalizedEmailOrUserName || u.NormalizedUserName == normalizedEmailOrUserName)
+                .FirstOrDefaultAsync();
+
+            if (user != null)
+            {
+                _logger.LogInformation("User found with identifier: {EmailOrUserName}", emailOrUserName);
+            }
+            else
+            {
+                _logger.LogInformation("No user found with identifier: {EmailOrUserName}", emailOrUserName);
+            }
+
+            activity.SetStatus(ActivityStatusCode.Ok, "User retrieval successful");
+            return user;
+        }
+        catch (Exception ex)
+        {
+            activity.SetStatus(ActivityStatusCode.Error, "Error retrieving user");
+            _logger.LogError(ex, "An error occurred while retrieving user with identifier: {EmailOrUserName}", emailOrUserName);
+            throw;
+        }
+    }
+
+    private static void EnrichLogContext(Activity activity)
+    {
+        if (activity == null)
+        {
+            return;
+        }
+
+        LogContext.PushProperty("TraceId", activity.TraceId.ToString());
+        LogContext.PushProperty("SpanId", activity.SpanId.ToString());
+        LogContext.PushProperty("ParentId", activity.ParentSpanId.ToString());
     }
 }
