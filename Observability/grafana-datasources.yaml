@@ -12,6 +12,8 @@ datasources:
       httpMethod: GET
       tracesToLogs:
         datasourceUid: 'loki'
+      tracesToMetrics:
+        datasourceUid: 'prometheus'
         
   - name: Loki
     type: loki
@@ -26,3 +28,15 @@ datasources:
           matcherRegex: "traceID=(\\w+)"
           name: TraceID
           url: "$${__value.raw}"
+
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    uid: prometheus
+    editable: true
+    jsonData:
+      httpMethod: POST
+      exemplarTraceIdDestinations:
+        - name: TraceID
+          datasourceUid: tempo

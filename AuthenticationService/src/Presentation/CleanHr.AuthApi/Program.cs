@@ -1,4 +1,5 @@
 using CleanHr.AuthApi.Extensions;
+using CleanHr.AuthApi.Telemetry;
 using Serilog;
 
 namespace CleanHr.AuthApi;
@@ -25,6 +26,9 @@ internal static class Program
             // Configure OpenTelemetry Tracing
             builder.Services.AddOpenTelemetryTracing(builder.Configuration);
 
+            // Register API version activity enricher for metrics
+            builder.Services.AddSingleton<ApiVersionActivityEnricher>();
+
             Log.Information("Configuring application services...");
             // Configure  application services
             builder.ConfigureServices();
@@ -32,6 +36,9 @@ internal static class Program
             Log.Information("Building web application...");
             // Build the web application.
             WebApplication webApp = builder.Build();
+
+            // Initialize API version activity enricher
+            _ = webApp.Services.GetRequiredService<ApiVersionActivityEnricher>();
 
             Log.Information("Configuring middleware pipeline...");
             // Add middlewares to the web application.

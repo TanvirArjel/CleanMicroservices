@@ -10,6 +10,7 @@ using CleanHr.AuthApi.Persistence.RelationalDB.Extensions;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using Microsoft.AspNetCore.ResponseCompression;
+using OpenTelemetry.Metrics;
 using Swashbuckle.AspNetCore.SwaggerUI;
 using TanvirArjel.Extensions.Microsoft.DependencyInjection;
 
@@ -139,6 +140,9 @@ internal static class Startup
 
         app.UseCors(_myAllowSpecificOrigins);
         ////app.UseCors(options => options.SetIsOriginAllowed(x => _ = true).AllowAnyMethod().AllowAnyHeader().AllowCredentials());
+
+        // OpenTelemetry Prometheus metrics endpoint (must be before authentication to allow anonymous access)
+        app.MapPrometheusScrapingEndpoint();
 
         app.UseAuthentication();
         app.UseAuthorization();

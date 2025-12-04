@@ -49,6 +49,8 @@ public sealed class LoginUserCommand(string emailOrUserName, string password) : 
 
             EnrichLogContext(activity);
 
+            ApplicationMetrics.ActiveLogins.Add(1);
+
             try
             {
                 _logger.LogInformation("Processing login for {EmailOrUserName}", request.EmailOrUserName);
@@ -56,23 +58,30 @@ public sealed class LoginUserCommand(string emailOrUserName, string password) : 
 
                 if (string.IsNullOrWhiteSpace(request.EmailOrUserName))
                 {
+                    ApplicationMetrics.RecordLoginAttempt("validation_failed", "missing_email_or_username");
                     return Result<AuthenticationResult>.Failure("EmailOrUserName", "The email or username is required.");
                 }
 
                 if (string.IsNullOrWhiteSpace(request.Password))
                 {
+                    ApplicationMetrics.RecordLoginAttempt("validation_failed", "missing_password");
                     return Result<AuthenticationResult>.Failure("Password", "The password is required.");
                 }
 
                 ApplicationUser user = await _applicationUserRepository.GetByEmailOrUserNameAsync(request.EmailOrUserName);
                 if (user == null)
                 {
+                    ApplicationMetrics.RecordLoginAttempt("failed", "user_not_found");
+                    ApplicationMetrics.RecordUserLookup(found: false);
                     return Result<AuthenticationResult>.Failure("EmailOrUserName", "The email or username does not exist.");
                 }
+
+                ApplicationMetrics.RecordUserLookup(found: true);
 
                 var isPasswordValid = await ValidatePasswordAsync(user, request.Password);
                 if (!isPasswordValid)
                 {
+                    ApplicationMetrics.RecordLoginAttempt("failed", "invalid_password");
                     return Result<AuthenticationResult>.Failure("Password", "The password is incorrect.");
                 }
 
@@ -81,6 +90,7 @@ public sealed class LoginUserCommand(string emailOrUserName, string password) : 
                 if (authResult.IsSuccess == false)
                 {
                     activity?.SetStatus(ActivityStatusCode.Error, "Failed to generate JWT tokens");
+                    ApplicationMetrics.RecordLoginAttempt("failed", "token_generation_failed");
                     _logger.LogError("Failed to generate JWT tokens for user {UserId}", user.Id);
                     return Result<AuthenticationResult>.Failure("TokenGeneration", "Failed to generate authentication tokens.");
                 }
@@ -88,6 +98,7 @@ public sealed class LoginUserCommand(string emailOrUserName, string password) : 
                 await RecordLoginAsync(user, cancellationToken);
 
                 activity?.SetStatus(ActivityStatusCode.Ok, "Login successful");
+                ApplicationMetrics.RecordLoginAttempt("success", "none");
                 _logger.LogInformation("Login successful for user {UserId}", user.Id);
 
                 return Result<AuthenticationResult>.Success(authResult.Value);
@@ -95,17 +106,21 @@ public sealed class LoginUserCommand(string emailOrUserName, string password) : 
             catch (Exception ex)
             {
                 activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
+                ApplicationMetrics.RecordLoginAttempt("error", ex.GetType().Name);
 
                 var logFields = new Dictionary<string, object>
-                {
-                    { "EmailOrUserName", request.EmailOrUserName }
-                };
+            {
+                { "EmailOrUserName", request.EmailOrUserName }
+            };
 
                 _logger.LogException(ex, "Unhandled exception occurred while processing login for {EmailOrUserName}", logFields);
                 return Result<AuthenticationResult>.Failure("Exception", "An error occurred while processing the login.");
             }
+            finally
+            {
+                ApplicationMetrics.ActiveLogins.Add(-1);
+            }
         }
-
         private async Task<bool> ValidatePasswordAsync(ApplicationUser user, string password)
         {
             using var activity = ApplicationDiagnostics.ActivitySource.StartActivity("ValidatePassword", ActivityKind.Internal);
@@ -114,16 +129,16 @@ public sealed class LoginUserCommand(string emailOrUserName, string password) : 
 
             _logger.LogDebug("Validating password for user {User}", user);
 
-            var isValid = await _userManager.CheckPasswordAsync(user, password);
-
-            if (isValid)
+            var isValid = await _userManager.CheckPasswordAsync(user, password); if (isValid)
             {
-                activity.SetStatus(ActivityStatusCode.Ok, "Password validation successful");
+                activity?.SetStatus(ActivityStatusCode.Ok, "Password validation successful");
+                ApplicationMetrics.RecordPasswordValidation(isValid: true);
                 _logger.LogInformation("Password validation successful for user {UserId}", user.Id);
             }
             else
             {
-                activity.SetStatus(ActivityStatusCode.Error, "Password validation failed");
+                activity?.SetStatus(ActivityStatusCode.Error, "Password validation failed");
+                ApplicationMetrics.RecordPasswordValidation(isValid: false);
                 _logger.LogWarning("Login failed: Invalid password for user {UserId}", user.Id);
             }
 

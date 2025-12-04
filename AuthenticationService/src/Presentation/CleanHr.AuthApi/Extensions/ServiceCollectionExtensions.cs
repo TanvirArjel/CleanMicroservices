@@ -3,8 +3,10 @@ using CleanHr.AuthApi.Application.Infrastructures;
 using CleanHr.AuthApi.Application.Telemetry;
 using CleanHr.AuthApi.Constants;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.IdentityModel.Tokens;
+using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using TanvirArjel.ArgumentChecker;
@@ -105,21 +107,46 @@ internal static class ServiceCollectionExtensions
 				.AddService(
 					serviceName: configuration.GetValue<string>("OpenTelemetry:ServiceName") ?? "CleanHrApi",
 					serviceVersion: typeof(ServiceCollectionExtensions).Assembly.GetName().Version?.ToString() ?? "1.0.0"))
-			.WithTracing(tracing => tracing
-				.AddSource(ApplicationDiagnostics.ActivitySourceName)
-				.AddAspNetCoreInstrumentation(options =>
-				{
-					options.RecordException = true;
-					options.Filter = (httpContext) =>
-					{
-						// Don't trace health check endpoints
-						return !httpContext.Request.Path.StartsWithSegments("/healthz", StringComparison.OrdinalIgnoreCase);
-					};
-					options.EnrichWithHttpRequest = (activity, httpRequest) =>
+            .WithMetrics(metrics =>
+            {
+                // ASP.NET Core HTTP metrics (request duration, status codes, etc.)
+                metrics.AddAspNetCoreInstrumentation()
+                // .NET Runtime metrics (CPU, memory, GC, thread pool, etc.)
+                .AddRuntimeInstrumentation()
+                // HTTP client metrics
+                .AddHttpClientInstrumentation()
+                // Custom business metrics
+                .AddMeter(ApplicationMetrics.MeterName)
+                // Export to Prometheus via /metrics endpoint
+                .AddPrometheusExporter();
+            })
+            .WithTracing(tracing => tracing
+                .AddSource(ApplicationDiagnostics.ActivitySourceName)
+                .AddAspNetCoreInstrumentation(options =>
+                {
+                    options.RecordException = true;
+                    options.Filter = (httpContext) =>
+                    {
+                        // Don't trace health check endpoints
+                        return !httpContext.Request.Path.StartsWithSegments("/healthz", StringComparison.OrdinalIgnoreCase);
+                    };
+                    options.EnrichWithHttpRequest = (activity, httpRequest) =>
 					{
 						activity.SetTag("http.request.content_type", httpRequest.ContentType);
 						activity.SetTag("http.request.content_length", httpRequest.ContentLength);
-					};
+
+                        // Resolve API version in route template for metrics and traces
+                        var apiVersion = httpRequest.HttpContext.GetRequestedApiVersion();
+                        if (apiVersion != null)
+                        {
+                            var route = activity.GetTagItem("http.route")?.ToString();
+                            if (!string.IsNullOrEmpty(route) && route.Contains("{version:apiVersion}", StringComparison.OrdinalIgnoreCase))
+                            {
+                                var resolvedRoute = route.Replace("{version:apiVersion}", apiVersion.ToString(), StringComparison.OrdinalIgnoreCase);
+                                activity.SetTag("http.route", resolvedRoute);
+                            }
+                        }
+                    };
 					options.EnrichWithHttpResponse = (activity, httpResponse) =>
 					{
 						activity.SetTag("http.response.content_type", httpResponse.ContentType);

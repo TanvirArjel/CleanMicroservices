@@ -1,0 +1,56 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: 'cleanhr-local'
+    environment: 'development'
+
+# Scrape configurations
+scrape_configs:
+  # CleanHr Auth API - OpenTelemetry metrics
+  - job_name: 'cleanhr-auth-api'
+    scrape_interval: 10s
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: ['host.docker.internal:5100']
+        labels:
+          service: 'auth-api'
+          application: 'cleanhr'
+
+  # CleanHr Employee API - OpenTelemetry metrics
+  - job_name: 'cleanhr-employee-api'
+    scrape_interval: 10s
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: ['host.docker.internal:5001']
+        labels:
+          service: 'employee-api'
+          application: 'cleanhr'
+
+  # CleanHr Department API - OpenTelemetry metrics
+  - job_name: 'cleanhr-department-api'
+    scrape_interval: 10s
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: ['host.docker.internal:5002']
+        labels:
+          service: 'department-api'
+          application: 'cleanhr'
+
+  # CleanHr Blazor Client - OpenTelemetry metrics (if applicable)
+  - job_name: 'cleanhr-blazor-client'
+    scrape_interval: 10s
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: ['host.docker.internal:5003']
+        labels:
+          service: 'blazor-client'
+          application: 'cleanhr'
+          
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+        labels:
+          service: 'prometheus'
+
