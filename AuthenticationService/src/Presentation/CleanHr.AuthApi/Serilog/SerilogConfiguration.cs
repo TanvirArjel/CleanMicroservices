@@ -4,7 +4,7 @@ using Serilog.Events;
 using Serilog.Sinks.Grafana.Loki;
 using Serilog.Enrichers.Span;
 
-namespace CleanHr.AuthApi.Extensions;
+namespace CleanHr.AuthApi.Serilog;
 
 internal static class SerilogConfiguration
 {
@@ -18,10 +18,11 @@ internal static class SerilogConfiguration
             .MinimumLevel.Override("System", LogEventLevel.Warning)
             .Enrich.FromLogContext()
             .Enrich.WithSpan()
+            .Enrich.With<CallerEnricher>()
             .Enrich.WithEnvironmentName()
             .Enrich.WithMachineName()
             .Enrich.WithThreadId()
-            .Enrich.WithProperty("Application", "AuthenticationService")
+            .Enrich.WithProperty("ServiceName", "AuthenticationService")
             .WriteTo.Console(
                 outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj} {Properties:j}{NewLine}{Exception}",
                 formatProvider: CultureInfo.InvariantCulture)
@@ -29,13 +30,15 @@ internal static class SerilogConfiguration
                 "http://localhost:3100",
                 labels:
                 [
-                    new LokiLabel { Key = "app", Value = "authentication-service" },
-                    new LokiLabel { Key = "environment", Value = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production" }
+                    new LokiLabel { Key = "environment", Value = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production" },
+                    new LokiLabel { Key = "service_name", Value = "AuthenticationService" }
                 ],
                 propertiesAsLabels: new[]
                 {
                     "TraceId",
                     "SpanId",
+                    "ParentId",
+                    "MethodName"
                 },
                 //textFormatter: new Serilog.Formatting.Compact.RenderedCompactJsonFormatter(),
                 leavePropertiesIntact: true)

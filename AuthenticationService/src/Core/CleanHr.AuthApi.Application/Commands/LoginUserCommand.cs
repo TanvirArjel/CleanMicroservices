@@ -8,7 +8,6 @@ using CleanHr.AuthApi.Domain.Repositories;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
-using Serilog.Context;
 using TanvirArjel.ArgumentChecker;
 using TanvirArjel.EFCore.GenericRepository;
 
@@ -46,8 +45,6 @@ public sealed class LoginUserCommand(string emailOrUserName, string password) : 
         {
             using var activity = ApplicationDiagnostics.ActivitySource.StartActivity("LoginUser", ActivityKind.Internal);
             activity.SetTag("login.identifier", request.EmailOrUserName);
-
-            EnrichLogContext(activity);
 
             ApplicationMetrics.ActiveLogins.Add(1);
 
@@ -125,7 +122,6 @@ public sealed class LoginUserCommand(string emailOrUserName, string password) : 
         {
             using var activity = ApplicationDiagnostics.ActivitySource.StartActivity("ValidatePassword", ActivityKind.Internal);
             activity?.SetTag(ApplicationDiagnostics.Tags.UserId, user.Id.ToString());
-            EnrichLogContext(activity);
 
             _logger.LogDebug("Validating password for user {User}", user);
 
@@ -152,7 +148,6 @@ public sealed class LoginUserCommand(string emailOrUserName, string password) : 
                 ActivityKind.Internal);
 
             activity?.SetTag(ApplicationDiagnostics.Tags.UserId, user?.Id.ToString());
-            EnrichLogContext(activity);
 
             try
             {
@@ -176,18 +171,6 @@ public sealed class LoginUserCommand(string emailOrUserName, string password) : 
 
                 _logger.LogException(ex, "Failed to record login for user {UserId}", fields);
             }
-        }
-
-        private static void EnrichLogContext(Activity activity)
-        {
-            if (activity == null)
-            {
-                return;
-            }
-
-            LogContext.PushProperty("TraceId", activity.TraceId.ToString());
-            LogContext.PushProperty("SpanId", activity.SpanId.ToString());
-            LogContext.PushProperty("ParentId", activity.ParentSpanId.ToString());
         }
     }
 }

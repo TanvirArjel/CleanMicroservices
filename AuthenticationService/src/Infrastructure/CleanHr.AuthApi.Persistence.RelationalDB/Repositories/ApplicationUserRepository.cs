@@ -54,8 +54,6 @@ internal sealed class ApplicationUserRepository : IApplicationUserRepository
                ActivityKind.Internal);
         activity.SetTag("query.identifier", emailOrUserName);
 
-        EnrichLogContext(activity);
-
         try
         {
             string normalizedEmailOrUserName = emailOrUserName.ToUpperInvariant();
@@ -81,17 +79,5 @@ internal sealed class ApplicationUserRepository : IApplicationUserRepository
             _logger.LogError(ex, "An error occurred while retrieving user with identifier: {EmailOrUserName}", emailOrUserName);
             throw;
         }
-    }
-
-    private static void EnrichLogContext(Activity activity)
-    {
-        if (activity == null)
-        {
-            return;
-        }
-
-        LogContext.PushProperty("TraceId", activity.TraceId.ToString());
-        LogContext.PushProperty("SpanId", activity.SpanId.ToString());
-        LogContext.PushProperty("ParentId", activity.ParentSpanId.ToString());
     }
 }

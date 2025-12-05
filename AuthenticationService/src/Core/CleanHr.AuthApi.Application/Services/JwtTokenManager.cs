@@ -53,7 +53,6 @@ public class JwtTokenManager
     {
         using var activity = ApplicationDiagnostics.ActivitySource.StartActivity("GetJwtToken", ActivityKind.Internal);
         activity?.SetTag("user.id", userId);
-        EnrichLogContext(activity);
 
         if (string.IsNullOrWhiteSpace(userId))
         {
@@ -82,7 +81,6 @@ public class JwtTokenManager
     {
         using var activity = ApplicationDiagnostics.ActivitySource.StartActivity("GetJwtToken", ActivityKind.Internal);
         activity?.SetTag("user.id", user?.Id.ToString());
-        EnrichLogContext(activity);
 
         var result = await GetTokenAsync(user, oldRefreshToken: null);
 
@@ -103,7 +101,6 @@ public class JwtTokenManager
         using var activity = ApplicationDiagnostics.ActivitySource.StartActivity(
                "GenerateJwtToken",
                ActivityKind.Internal);
-        EnrichLogContext(activity);
 
         if (string.IsNullOrWhiteSpace(accessToken))
         {
@@ -382,17 +379,5 @@ public class JwtTokenManager
         string refreshToken = Convert.ToBase64String(randomNumber);
 
         return refreshToken;
-    }
-
-    private static void EnrichLogContext(Activity activity)
-    {
-        if (activity == null)
-        {
-            return;
-        }
-
-        LogContext.PushProperty("TraceId", activity.TraceId.ToString());
-        LogContext.PushProperty("SpanId", activity.SpanId.ToString());
-        LogContext.PushProperty("ParentId", activity.ParentSpanId.ToString());
     }
 }
