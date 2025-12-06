@@ -1,10 +1,10 @@
 ﻿using System.Threading;
-using CleanHr.EmployeeApi.Application.Extensions;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Logging;
+using Microsoft.IdentityModel.Logging;
 
-namespace CleanHr.EmployeeApi;
+namespace CleanHr.EmployeeApi.Health;
 
 internal sealed class DbConnectionHealthCheck : IHealthCheck
 {
@@ -23,14 +23,9 @@ internal sealed class DbConnectionHealthCheck : IHealthCheck
         HealthCheckContext context,
         CancellationToken cancellationToken = default)
     {
-        Dictionary<string, object> fields = new()
-        {
-            { "ConnectionString", _connectionString }
-        };
-
         try
         {
-            _logger.LogWithLevel(LogLevel.Information, "Testing database connection...", fields);
+            _logger.LogInformation("Testing database connection with {ConnectionString}", _connectionString);
             using SqlConnection sqlConnection = new(_connectionString);
             using SqlCommand sqlCommand = sqlConnection.CreateCommand();
             sqlCommand.CommandText = "SELECT 1";
@@ -42,7 +37,7 @@ internal sealed class DbConnectionHealthCheck : IHealthCheck
 		}
 		catch (Exception exception)
 		{
-            _logger.LogException(exception, "Database connection is unhealthy.", fields);
+            _logger.LogCritical(exception, "Database connection is unhealthy with {ConnectionString}", _connectionString);
             return HealthCheckResult.Unhealthy(description: exception.Message);
         }
     }

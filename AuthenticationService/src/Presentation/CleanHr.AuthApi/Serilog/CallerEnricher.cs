@@ -6,7 +6,7 @@ using System.Text.RegularExpressions;
 
 namespace CleanHr.AuthApi.Serilog;
 
-internal class CallerEnricher : ILogEventEnricher
+internal sealed class CallerEnricher : ILogEventEnricher
 {
     public void Enrich(LogEvent logEvent, ILogEventPropertyFactory propertyFactory)
     {

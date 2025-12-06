@@ -92,7 +92,7 @@ public class ExternalLoginSignInCallbackEndpoint : ExternalLoginEndpointBase
             // Update any authentication tokens if login succeeded
             await _signInManager.UpdateExternalAuthenticationTokensAsync(externalLoginInfo);
 
-            _logger.LogWithLevel(LogLevel.Information, $"User logged in with {externalLoginInfo.LoginProvider} provider.");
+            _logger.LogInformation("User logged in with {LoginProvider} provider.", externalLoginInfo.LoginProvider);
 
             var authResult = await _jwtTokenManager.GetTokenAsync(applicationUser);
             string redirectUrl = QueryHelpers.AddQueryString(ClientLoginUrl, "jwt", authResult.Value.AccessToken);

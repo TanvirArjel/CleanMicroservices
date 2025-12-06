@@ -1,6 +1,5 @@
 ﻿using CleanHr.AuthApi.Features.User.Models;
 using CleanHr.AuthApi.Application.Commands;
-using CleanHr.AuthApi.Application.Extensions;
 using CleanHr.AuthApi.Domain;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -33,34 +32,18 @@ public class UserRegistrationEndpoint : UserEndpointBase
     [SwaggerOperation(Summary = "Create or register new user by posting the required data.")]
     public async Task<ActionResult> Post(RegistrationModel model)
     {
-        try
+        RegisterUserCommand command = new(
+            model.Email,
+            model.Password,
+            model.ConfirmPassword);
+
+        Result<Guid> result = await _mediator.Send(command);
+
+        if (result.IsSuccess == false)
         {
-            RegisterUserCommand command = new(
-                model.Email,
-                model.Password,
-                model.ConfirmPassword);
-
-            Result<Guid> result = await _mediator.Send(command);
-
-            if (result.IsSuccess == false)
-            {
-                return ValidationProblem(result.Errors);
-            }
-
-            return Ok();
+            return ValidationProblem(result.Errors);
         }
-        catch (Exception exception)
-        {
-            model.Password = null;
-            model.ConfirmPassword = null;
 
-            Dictionary<string, object> fields = new()
-            {
-                { "RequestBody", model }
-            };
-
-            _logger.LogException(exception, "An error occurred during user registration.", fields);
-            return StatusCode(StatusCodes.Status500InternalServerError);
-        }
+        return Ok();
     }
 }

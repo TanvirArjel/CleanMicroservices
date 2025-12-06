@@ -1,5 +1,4 @@
 ﻿using System.Text;
-using CleanHr.EmployeeApi.Application.Extensions;
 using CleanHr.EmployeeApi.Domain.Exceptions;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Mvc;
@@ -61,7 +60,7 @@ internal sealed class ExceptionHandlerFilter : IAsyncExceptionFilter
             { "RequestBody", requestBoy }
         };
 
-        _exceptionLogger.LogException(context.Exception, $"Error occurred while processing request to {requestPath}", fields);
+        _exceptionLogger.LogError(context.Exception, "Error occurred while processing request", fields);
 
         context.Result = new StatusCodeResult(500);
     }

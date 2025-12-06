@@ -4,51 +4,26 @@ namespace CleanHr.AuthApi.Application.Extensions;
 
 public static class LoggerExtensions
 {
-#pragma warning disable CA2254 // Template should be a static expression
-    public static void LogWithLevel<T>(
-        this ILogger<T> logger,
-        LogLevel logLevel,
-        string message)
-    {
-        ArgumentNullException.ThrowIfNull(logger);
-
-        if (logger.IsEnabled(logLevel))
-        {
-            logger.Log(logLevel, message);
-        }
-    }
-
-    public static void LogWithLevel<T>(
-        this ILogger<T> logger,
-        LogLevel logLevel,
+    public static void LogInformation(
+        this ILogger logger,
         string message,
-        Dictionary<string, object> fields)
+        Dictionary<string, object> logProperties)
     {
-        ArgumentNullException.ThrowIfNull(logger);
-
-        if (logger.IsEnabled(logLevel))
+        using (logger?.BeginScope(logProperties))
         {
-            logger.Log(logLevel, message, fields);
+            logger.LogInformation("{Message}", message);
         }
     }
 
-    public static void LogException<T>(
-        this ILogger<T> logger,
+    public static void LogError(
+        this ILogger logger,
         Exception exception,
         string message,
-        Dictionary<string, object> fields)
+        Dictionary<string, object> logProperties)
     {
-        ArgumentNullException.ThrowIfNull(logger);
-
-        fields ??= [];
-        fields.Add("ExceptionMessage", exception?.Message);
-        fields.Add("ExceptionType", exception?.GetType().FullName ?? string.Empty);
-        fields.Add("StackTrace", exception?.StackTrace ?? string.Empty);
-
-        if (logger.IsEnabled(LogLevel.Error))
+        using (logger?.BeginScope(logProperties))
         {
-            logger.Log(LogLevel.Error, exception, message, fields);
+            logger.LogError(exception, "{Message}", message);
         }
     }
-#pragma warning restore CA2254
 }

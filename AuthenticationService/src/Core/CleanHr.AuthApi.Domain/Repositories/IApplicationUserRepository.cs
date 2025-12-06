@@ -15,5 +15,5 @@ public interface IApplicationUserRepository
 
     Task<ApplicationUser> GetByUserNameAsync(string userName);
 
-    Task<ApplicationUser> GetByEmailOrUserNameAsync(string emailOrUserName);
+    Task<Result<ApplicationUser>> GetByEmailOrUserNameAsync(string emailOrUserName);
 }

@@ -25,6 +25,13 @@ public sealed class EmailSender : IEmailSender
 
     public async Task SendAsync(EmailMessage emailMessage)
     {
+        using var _loggerScope = _logger.BeginScope(new Dictionary<string, object>
+        {
+            { "ReceiverEmail", emailMessage?.ReceiverEmail },
+            { "ReceiverName", emailMessage?.ReceiverName },
+            { "Subject", emailMessage?.Subject }
+        });
+
         try
         {
             ArgumentNullException.ThrowIfNull(emailMessage);
@@ -47,13 +54,7 @@ public sealed class EmailSender : IEmailSender
         }
         catch (Exception exception)
         {
-            Dictionary<string, object> fields = new()
-            {
-                { "ReceiverEmail", emailMessage?.ReceiverEmail },
-                { "ReceiverName", emailMessage?.ReceiverName },
-                { "Subject", emailMessage?.Subject }
-            };
-            _logger.LogException(exception, $"Error sending email to {emailMessage?.ReceiverEmail}", fields);
+            _logger.LogError(exception, "Error sending email to {ReceiverEmail}", emailMessage?.ReceiverEmail);
         }
     }
 }

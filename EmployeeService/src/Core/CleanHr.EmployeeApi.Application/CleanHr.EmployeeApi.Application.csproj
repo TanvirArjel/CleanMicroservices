@@ -22,6 +22,8 @@
     <ProjectReference Include="..\CleanHr.EmployeeApi.Domain\CleanHr.EmployeeApi.Domain.csproj" />
   </ItemGroup>	<ItemGroup>
        <InternalsVisibleTo Include="CleanHr.Application.Tests" />
-    </ItemGroup>
+    </ItemGroup>	<ItemGroup>
+  <Folder Include="Extensions/" />
+</ItemGroup>
 
 </Project>

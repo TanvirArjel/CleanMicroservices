@@ -29,18 +29,20 @@ internal sealed class ExceptionHandlerFilter : IAsyncExceptionFilter
         }
         catch (Exception ex)
         {
-            Console.WriteLine("Can't rewind body stream. " + ex.Message);
+            _logger.LogWarning(ex, "Can't rewind body stream.");
         }
 
         using StreamReader streamReader = new(httpRequest.Body, Encoding.UTF8);
         string requestBody = await streamReader.ReadToEndAsync();
-        Dictionary<string, object> fields = new()
+
+        using var loggerScope = _logger.BeginScope(new Dictionary<string, object>
         {
             { "RequestPath", requestPath },
-            { "RequestBody", requestBody }
-        };
+            { "RequestBody", requestBody },
+            { "QueryString", httpRequest.QueryString.ToString() }
+        });
 
-        _logger.LogException(context.Exception, $"Error occurred while processing request to {requestPath}", fields);
+        _logger.LogCritical(context.Exception, "Unhandled exception occurred while processing request to {RequestPath}", requestPath);
 
         context.Result = new StatusCodeResult(500);
     }

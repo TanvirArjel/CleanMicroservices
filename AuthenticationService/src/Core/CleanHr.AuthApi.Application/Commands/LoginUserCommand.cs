@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using CleanHr.AuthApi.Application.Extensions;
 using CleanHr.AuthApi.Application.Services;
 using CleanHr.AuthApi.Application.Telemetry;
 using CleanHr.AuthApi.Domain;
@@ -65,8 +64,14 @@ public sealed class LoginUserCommand(string emailOrUserName, string password) : 
                     return Result<AuthenticationResult>.Failure("Password", "The password is required.");
                 }
 
-                ApplicationUser user = await _applicationUserRepository.GetByEmailOrUserNameAsync(request.EmailOrUserName);
-                if (user == null)
+                var findUserResult = await _applicationUserRepository.GetByEmailOrUserNameAsync(request.EmailOrUserName);
+
+                if (findUserResult.IsSuccess == false)
+                {
+                    return Result<AuthenticationResult>.Failure("UserRetrieval", "An error occurred while retrieving the user.");
+                }
+
+                if (findUserResult.Value == null)
                 {
                     ApplicationMetrics.RecordLoginAttempt("failed", "user_not_found");
                     ApplicationMetrics.RecordUserLookup(found: false);
@@ -74,29 +79,29 @@ public sealed class LoginUserCommand(string emailOrUserName, string password) : 
                 }
 
                 ApplicationMetrics.RecordUserLookup(found: true);
+                ApplicationMetrics.RecordLoginAttempt("success", "user_found");
 
-                var isPasswordValid = await ValidatePasswordAsync(user, request.Password);
+                var isPasswordValid = await ValidatePasswordAsync(findUserResult.Value, request.Password);
                 if (!isPasswordValid)
                 {
                     ApplicationMetrics.RecordLoginAttempt("failed", "invalid_password");
                     return Result<AuthenticationResult>.Failure("Password", "The password is incorrect.");
                 }
 
-                var authResult = await _jwtTokenManager.GetTokenAsync(user);
+                var authResult = await _jwtTokenManager.GetTokenAsync(findUserResult.Value);
 
                 if (authResult.IsSuccess == false)
                 {
                     activity?.SetStatus(ActivityStatusCode.Error, "Failed to generate JWT tokens");
                     ApplicationMetrics.RecordLoginAttempt("failed", "token_generation_failed");
-                    _logger.LogError("Failed to generate JWT tokens for user {UserId}", user.Id);
+                    _logger.LogError("Failed to generate JWT tokens for user {UserId}", findUserResult.Value.Id);
                     return Result<AuthenticationResult>.Failure("TokenGeneration", "Failed to generate authentication tokens.");
                 }
 
-                await RecordLoginAsync(user, cancellationToken);
-
+                await RecordLoginAsync(findUserResult.Value, cancellationToken);
                 activity?.SetStatus(ActivityStatusCode.Ok, "Login successful");
                 ApplicationMetrics.RecordLoginAttempt("success", "none");
-                _logger.LogInformation("Login successful for user {UserId}", user.Id);
+                _logger.LogInformation("Login successful for user {UserId}", findUserResult.Value.Id);
 
                 return Result<AuthenticationResult>.Success(authResult.Value);
             }
@@ -105,12 +110,7 @@ public sealed class LoginUserCommand(string emailOrUserName, string password) : 
                 activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
                 ApplicationMetrics.RecordLoginAttempt("error", ex.GetType().Name);
 
-                var logFields = new Dictionary<string, object>
-            {
-                { "EmailOrUserName", request.EmailOrUserName }
-            };
-
-                _logger.LogException(ex, "Unhandled exception occurred while processing login for {EmailOrUserName}", logFields);
+                _logger.LogError(ex, "Unhandled exception occurred while processing login for {EmailOrUserName}", request.EmailOrUserName);
                 return Result<AuthenticationResult>.Failure("Exception", "An error occurred while processing the login.");
             }
             finally
@@ -164,12 +164,7 @@ public sealed class LoginUserCommand(string emailOrUserName, string password) : 
             {
                 activity.SetStatus(ActivityStatusCode.Error, "Failed to record login");
 
-                var fields = new Dictionary<string, object>
-                {
-                    { "UserId", user.Id }
-                };
-
-                _logger.LogException(ex, "Failed to record login for user {UserId}", fields);
+                _logger.LogError(ex, "Failed to record login for user {UserId}", user.Id);
             }
         }
     }

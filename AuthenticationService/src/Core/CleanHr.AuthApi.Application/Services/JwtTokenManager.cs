@@ -15,7 +15,6 @@ using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
-using Serilog.Context;
 using TanvirArjel.EFCore.GenericRepository;
 
 namespace CleanHr.AuthApi.Application.Services;
@@ -144,6 +143,13 @@ public class JwtTokenManager
 
     private async Task<Result<AuthenticationResult>> GetTokenAsync(ApplicationUser user, string oldRefreshToken)
     {
+        using var _loggerScope = _logger.BeginScope(new Dictionary<string, object>
+        {
+            { "UserId", user?.Id.ToString() },
+            {"Email", user?.Email },
+            {"UserName", user?.UserName }
+        });
+
         try
         {
             if (user == null)
@@ -238,11 +244,7 @@ public class JwtTokenManager
         }
         catch (Exception ex)
         {
-            var logFields = new Dictionary<string, object>
-            {
-                { "UserId", user?.Id.ToString() }
-            };
-            _logger.LogException(ex, "Error generating JWT token for user {UserId}", logFields);
+            _logger.LogError(ex, "Error while generating JWT token for user {UserId}", user?.Id);
             return Result<AuthenticationResult>.Failure("Exception while generating JWT token.");
         }
     }

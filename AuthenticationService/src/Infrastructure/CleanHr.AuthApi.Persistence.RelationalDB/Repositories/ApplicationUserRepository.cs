@@ -4,11 +4,11 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
 using CleanHr.AuthApi.Application.Telemetry;
+using CleanHr.AuthApi.Domain;
 using CleanHr.AuthApi.Domain.Models;
 using CleanHr.AuthApi.Domain.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using Serilog.Context;
 using TanvirArjel.Extensions.Microsoft.DependencyInjection;
 
 namespace CleanHr.AuthApi.Persistence.RelationalDB.Repositories;
@@ -47,7 +47,7 @@ internal sealed class ApplicationUserRepository : IApplicationUserRepository
             .FirstOrDefaultAsync(u => u.UserName == userName);
     }
 
-    public async Task<ApplicationUser> GetByEmailOrUserNameAsync(string emailOrUserName)
+    public async Task<Result<ApplicationUser>> GetByEmailOrUserNameAsync(string emailOrUserName)
     {
         using var activity = ApplicationDiagnostics.ActivitySource.StartActivity(
                "GetByEmailOrUserName",
@@ -63,21 +63,21 @@ internal sealed class ApplicationUserRepository : IApplicationUserRepository
 
             if (user != null)
             {
-                _logger.LogInformation("User found with identifier: {EmailOrUserName}", emailOrUserName);
+                _logger.LogInformation("User found with email/username: {EmailOrUserName}", emailOrUserName);
             }
             else
             {
-                _logger.LogInformation("No user found with identifier: {EmailOrUserName}", emailOrUserName);
+                _logger.LogInformation("No user found with email/username: {EmailOrUserName}", emailOrUserName);
             }
 
             activity.SetStatus(ActivityStatusCode.Ok, "User retrieval successful");
-            return user;
+            return Result<ApplicationUser>.Success(user);
         }
         catch (Exception ex)
         {
             activity.SetStatus(ActivityStatusCode.Error, "Error retrieving user");
-            _logger.LogError(ex, "An error occurred while retrieving user with identifier: {EmailOrUserName}", emailOrUserName);
-            throw;
+            _logger.LogCritical(ex, "An error occurred while retrieving user with email/username: {EmailOrUserName}", emailOrUserName);
+            return Result<ApplicationUser>.Failure("An error occurred while retrieving user.");
         }
     }
 }

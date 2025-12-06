@@ -1,8 +1,4 @@
-﻿using System.Globalization;
-using System.IO;
-using System.Linq;
-using System.Linq.Dynamic.Core;
-using CleanHr.AuthApi.Application.Extensions;
+﻿using System.IO;
 using CleanHr.AuthApi.Domain.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
@@ -14,7 +10,6 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.AspNetCore.Routing;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using TanvirArjel.ArgumentChecker;
 using TanvirArjel.Extensions.Microsoft.DependencyInjection;
@@ -47,6 +42,12 @@ public sealed class ViewRenderService
 
     public async Task<string> RenderViewToStringAsync(string viewNameOrPath, object model)
     {
+        Dictionary<string, object> logProperties = new()
+        {
+            { "ViewNameOrPath", viewNameOrPath },
+            { "Model", model  }
+        };
+
         try
         {
             if (string.IsNullOrWhiteSpace(viewNameOrPath))
@@ -87,13 +88,7 @@ public sealed class ViewRenderService
         }
         catch (Exception exception)
         {
-            Dictionary<string, object> fields = new()
-            {
-                { "ViewNameOrPath", viewNameOrPath },
-                { "Model", model }
-            };
-
-            _logger.LogWithLevel(LogLevel.Error, exception.Message, fields);
+            _logger.LogError(exception, "Error occurred while rendering view to string.", logProperties);
             throw;
         }
     }
@@ -114,13 +109,7 @@ public sealed class ViewRenderService
         }
         catch (Exception exception)
         {
-            Dictionary<string, object> methodParamsDict = new() {
-                { "ViewNameOrPath", viewNameOrPath },
-                { "Model", model },
-                { "UserId", userId }
-            };
-
-            _logger.LogWithLevel(LogLevel.Error, exception.Message, methodParamsDict);
+            _logger.LogError(exception, "Error occurred while rendering view to string.");
             throw;
         }
     }

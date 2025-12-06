@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using CleanHr.EmployeeApi.Application.Extensions;
 using CleanHr.EmployeeApi.Application.Infrastructures;
 using CleanHr.EmployeeApi.Infrastructure.Services.Configs;
 using Microsoft.Extensions.Logging;
@@ -53,7 +52,8 @@ public sealed class EmailSender : IEmailSender
                 { "ReceiverName", emailMessage?.ReceiverName },
                 { "Subject", emailMessage?.Subject }
             };
-            _logger.LogException(exception, $"Error sending email to {emailMessage?.ReceiverEmail}", fields);
+
+            _logger.LogError(exception, "Error while sending email", fields);
         }
     }
 }

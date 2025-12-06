@@ -1,6 +1,7 @@
 ﻿using System.Text;
 using CleanHr.EmployeeApi.Configs;
 using CleanHr.EmployeeApi.Constants;
+using CleanHr.EmployeeApi.Health;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.IdentityModel.Tokens;

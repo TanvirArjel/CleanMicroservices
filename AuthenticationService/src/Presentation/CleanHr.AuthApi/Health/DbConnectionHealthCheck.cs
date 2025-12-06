@@ -23,14 +23,14 @@ internal sealed class DbConnectionHealthCheck : IHealthCheck
         HealthCheckContext context,
         CancellationToken cancellationToken = default)
     {
-        Dictionary<string, object> fields = new()
+        using var _ = _logger.BeginScope(new Dictionary<string, object>
         {
             { "ConnectionString", _connectionString }
-        };
+        });
 
         try
         {
-            _logger.LogWithLevel(LogLevel.Information, "Testing database connection...", fields);
+            _logger.LogInformation("Testing database connection...");
             using SqlConnection sqlConnection = new(_connectionString);
             using SqlCommand sqlCommand = sqlConnection.CreateCommand();
             sqlCommand.CommandText = "SELECT 1";
@@ -42,7 +42,7 @@ internal sealed class DbConnectionHealthCheck : IHealthCheck
 		}
 		catch (Exception exception)
 		{
-            _logger.LogException(exception, "Database connection is unhealthy.", fields);
+            _logger.LogCritical(exception, "Database connection is unhealthy.");
             return HealthCheckResult.Unhealthy(description: exception.Message);
         }
     }

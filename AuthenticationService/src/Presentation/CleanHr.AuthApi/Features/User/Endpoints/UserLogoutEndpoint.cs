@@ -40,8 +40,6 @@ public class UserLogoutEndpoint(IMediator mediator) : UserEndpointBase
             return BadRequest(result.Errors);
         }
 
-        await HttpContext.SignOutAsync();
-
         return Ok(new { message = "Logged out successfully. This device's session has been revoked." });
     }
 }

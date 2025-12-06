@@ -41,9 +41,6 @@
     <PackageReference Include="Microsoft.AspNetCore.Authentication.Twitter" Version="10.0.0" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\..\..\..\.editorconfig" Link=".editorconfig" />
-  </ItemGroup>
-  <ItemGroup>
     <ProjectReference Include="..\..\Core\CleanHr.EmployeeApi.Application\CleanHr.EmployeeApi.Application.csproj" />
     <ProjectReference Include="..\..\Infrastructure\CleanHr.EmployeeApi.Infrastructure.Services\CleanHr.EmployeeApi.Infrastructure.Services.csproj" />
     <ProjectReference Include="..\..\Infrastructure\CleanHr.EmployeeApi.Persistence.Cache\CleanHr.EmployeeApi.Persistence.Cache.csproj" />

@@ -1,6 +1,5 @@
 ﻿using CleanHr.AuthApi.Features.User.Models;
 using CleanHr.AuthApi.Application.Commands;
-using CleanHr.AuthApi.Application.Extensions;
 using CleanHr.AuthApi.Domain;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -14,14 +13,12 @@ namespace CleanHr.AuthApi.Features.User.Endpoints;
 public class ResetUserPasswordEndpoint : UserEndpointBase
 {
     private readonly IMediator _mediator;
-    private readonly ILogger<ResetUserPasswordEndpoint> _logger;
 
     public ResetUserPasswordEndpoint(
         IMediator mediator,
         ILogger<ResetUserPasswordEndpoint> logger)
     {
-        _mediator = mediator;
-        _logger = logger;
+        _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
     }
 
     [AllowAnonymous]
@@ -33,37 +30,19 @@ public class ResetUserPasswordEndpoint : UserEndpointBase
     [SwaggerOperation(Summary = "Reset a new password for an user by posting the password reset code and the new password.")]
     public async Task<IActionResult> Post(ResetPasswordModel model)
     {
-        try
+        ResetPasswordCommand resetPasswordCommand = new(model.Email, model.Code, model.Password);
+        Result result = await _mediator.Send(resetPasswordCommand);
+
+        if (result.IsSuccess == false)
         {
-            ResetPasswordCommand resetPasswordCommand = new(model.Email, model.Code, model.Password);
-            Result result = await _mediator.Send(resetPasswordCommand);
-
-            if (result.IsSuccess == false)
+            foreach (KeyValuePair<string, string> error in result.Errors)
             {
-                foreach (KeyValuePair<string, string> error in result.Errors)
-                {
-                    ModelState.AddModelError(error.Key, error.Value);
-                }
-
-                return ValidationProblem(ModelState);
+                ModelState.AddModelError(error.Key, error.Value);
             }
 
-            return Ok();
+            return ValidationProblem(ModelState);
         }
-        catch (Exception exception)
-        {
-            model.Password = string.Empty;
-            model.ConfirmPassword = string.Empty;
 
-
-            Dictionary<string, object> fields = new()
-            {
-                { "RequestBody", model }
-            };
-
-
-            _logger.LogException(exception, "An error occurred during password reset.", fields);
-            return StatusCode(StatusCodes.Status500InternalServerError);
-        }
+        return Ok();
     }
 }

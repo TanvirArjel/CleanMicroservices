@@ -1,6 +1,5 @@
 ﻿using CleanHr.AuthApi.Features.User.Models;
 using CleanHr.AuthApi.Application.Commands;
-using CleanHr.AuthApi.Application.Extensions;
 using CleanHr.AuthApi.Domain;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -35,35 +34,22 @@ public class UserLoginEndpoint : UserEndpointBase
     [SwaggerOperation(Summary = "Post the required credentials to get the access token for the login.")]
     public async Task<ActionResult<AuthenticationResponse>> Post([FromBody] LoginModel loginModel)
     {
-        try
+        LoginUserCommand command = new(loginModel.EmailOrUserName, loginModel.Password);
+        Result<AuthenticationResult> result = await _mediator.Send(command);
+
+        if (result.IsSuccess == false)
         {
-            LoginUserCommand command = new(loginModel.EmailOrUserName, loginModel.Password);
-            Result<AuthenticationResult> result = await _mediator.Send(command);
-
-            if (result.IsSuccess == false)
-            {
-                return ValidationProblem(result.Errors);
-            }
-
-            AuthenticationResponse response = new()
-            {
-                AccessToken = result.Value.AccessToken,
-                RefreshToken = result.Value.RefreshToken,
-                ExpiresIn = result.Value.ExpiresIn,
-                TokenType = "Bearer"
-            };
-
-            return Ok(response);
+            return ValidationProblem(result.Errors);
         }
-        catch (Exception exception)
+
+        AuthenticationResponse response = new()
         {
-            loginModel.Password = null;
-            Dictionary<string, object> fields = new()
-            {
-                { "LoginModel", loginModel }
-            };
-            _logger.LogException(exception, "An error occurred while processing the login.", fields);
-            return StatusCode(StatusCodes.Status500InternalServerError);
-        }
+            AccessToken = result.Value.AccessToken,
+            RefreshToken = result.Value.RefreshToken,
+            ExpiresIn = result.Value.ExpiresIn,
+            TokenType = "Bearer"
+        };
+
+        return Ok(response);
     }
 }

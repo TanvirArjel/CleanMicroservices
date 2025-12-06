@@ -44,6 +44,12 @@ public class ExternalLoginSignUpCallbackEndpoint : ExternalLoginEndpointBase
         string returnUrl = null,
         string remoteError = null)
     {
+        using var _ = _logger.BeginScope(new Dictionary<string, object>
+        {
+            { "ReturnUrl", returnUrl ?? string.Empty },
+            { "RemoteError", remoteError ?? string.Empty }
+        });
+
         try
         {
             if (remoteError != null)
@@ -105,7 +111,7 @@ public class ExternalLoginSignUpCallbackEndpoint : ExternalLoginEndpointBase
                 // Update any authentication tokens if login succeeded
                 await _signInManager.UpdateExternalAuthenticationTokensAsync(externalLoginInfo);
 
-                _logger.LogWithLevel(LogLevel.Information, $"User logged in with {externalLoginInfo.LoginProvider} provider.");
+                _logger.LogInformation("User logged in with {LoginProvider} provider.", externalLoginInfo.LoginProvider);
 
                 var authResult = await _jwtTokenManager.GetTokenAsync(applicationUser);
 
@@ -131,12 +137,8 @@ public class ExternalLoginSignUpCallbackEndpoint : ExternalLoginEndpointBase
         }
         catch (Exception exception)
         {
-            Dictionary<string, object> fields = new()
-            {
-                { "ReturnUrl", returnUrl },
-                { "RemoteError", remoteError }
-            };
-            _logger.LogException(exception, "An error occurred during external login sign-up callback.", fields);
+
+            _logger.LogCritical(exception, "An error occurred during external login sign-up callback.");
             ErrorMessage = "There is a problem with service. Please try again. if the problem persists then contact with system admin.";
             return RedirectWithError(ErrorMessage);
         }
