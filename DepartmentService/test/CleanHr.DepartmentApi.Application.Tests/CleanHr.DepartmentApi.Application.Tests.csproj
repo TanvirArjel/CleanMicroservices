@@ -23,4 +23,8 @@
 	  <ProjectReference Include="..\..\src\Core\CleanHr.DepartmentApi.Application\CleanHr.DepartmentApi.Application.csproj" />
 	</ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="DepartmentCommandTests/" />
+  </ItemGroup>
+
 </Project>

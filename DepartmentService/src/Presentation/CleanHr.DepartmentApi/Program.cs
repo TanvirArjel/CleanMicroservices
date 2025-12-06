@@ -1,4 +1,5 @@
 using CleanHr.DepartmentApi.Extensions;
+using CleanHr.DepartmentApi.Serilog;
 using Serilog;
 
 namespace CleanHr.DepartmentApi;

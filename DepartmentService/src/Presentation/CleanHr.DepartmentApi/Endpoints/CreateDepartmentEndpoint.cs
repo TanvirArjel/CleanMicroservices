@@ -28,13 +28,14 @@ public sealed class CreateDepartmentEndpoint : DepartmentEndpointBase
         CreateDepartmentCommand command = new(model.Name, model.Description);
         Result<Guid> result = await _mediator.Send(command, HttpContext.RequestAborted);
 
+        if (result.IsException)
+        {
+            return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while creating the department.");
+        }
+
         if (result.IsSuccess == false)
         {
-            foreach (KeyValuePair<string, string> error in result.Errors)
-            {
-                ModelState.AddModelError(error.Key, error.Value);
-            }
-
+            AddModelErrorsToModelState(result.Errors);
             return ValidationProblem(ModelState);
         }
 

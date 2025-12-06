@@ -93,7 +93,6 @@ public sealed class Department : AggregateRoot, ITimeFields
         ArgumentNullException.ThrowIfNull(repository);
 
         DepartmentNameValidator nameValidator = new(repository, this.Id);
-
         ValidationResult result = await nameValidator.ValidateAsync(name);
 
         if (result.IsValid == false)

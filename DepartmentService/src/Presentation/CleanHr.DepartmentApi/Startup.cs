@@ -11,6 +11,8 @@ using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using Microsoft.AspNetCore.ResponseCompression;
 using Swashbuckle.AspNetCore.SwaggerUI;
 using TanvirArjel.Extensions.Microsoft.DependencyInjection;
+using CleanHr.DepartmentApi.Configs;
+using Microsoft.AspNetCore.Mvc.Authorization;
 
 namespace CleanHr.DepartmentApi;
 
@@ -75,6 +77,7 @@ internal static class Startup
         {
             options.Filters.Add<BadRequestResultFilter>();
             options.Filters.Add<ExceptionHandlerFilter>();
+            options.Filters.Add(new AuthorizeFilter());
             options.Conventions.Add(new RouteTokenTransformerConvention(new SlugifyParameterTransformer()));
         }).ConfigureApiBehaviorOptions(options =>
         {
@@ -85,6 +88,9 @@ internal static class Startup
         services.AddEndpointsApiExplorer();
 
         services.AddSwaggerGeneration("Clean HR Department Service", "CleanHr.DepartmentApi");
+
+        JwtConfig jwtConfig = new("SampleIdentity.com", "SampleIdentitySecretKeyNeedsToBeLongEnough", 86400);
+        services.AddJwtAuthentication(jwtConfig);
     }
 
     public static async Task ConfigureMiddlewaresAsync(this WebApplication app)
@@ -129,6 +135,9 @@ internal static class Startup
 
         app.UseCors(_myAllowSpecificOrigins);
         ////app.UseCors(options => options.SetIsOriginAllowed(x => _ = true).AllowAnyMethod().AllowAnyHeader().AllowCredentials());
+
+        app.UseAuthentication();
+        app.UseAuthorization();
 
         // Add controller routes
         app.MapControllers();

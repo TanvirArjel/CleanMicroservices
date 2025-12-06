@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
@@ -9,6 +10,8 @@ public class Result
     public bool IsSuccess { get; }
 
     public string Error { get; }
+
+    public bool IsException => Errors != null && Errors.Count > 0 && Errors.ContainsKey("Exception");
 
     public Dictionary<string, string> Errors { get; }
 

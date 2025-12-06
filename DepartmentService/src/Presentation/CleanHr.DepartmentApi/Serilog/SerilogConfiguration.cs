@@ -2,8 +2,9 @@ using System.Globalization;
 using Serilog;
 using Serilog.Events;
 using Serilog.Sinks.Grafana.Loki;
+using Serilog.Enrichers.Span;
 
-namespace CleanHr.DepartmentApi.Extensions;
+namespace CleanHr.DepartmentApi.Serilog;
 
 internal static class SerilogConfiguration
 {
@@ -16,20 +17,30 @@ internal static class SerilogConfiguration
             .MinimumLevel.Override("Microsoft.EntityFrameworkCore", LogEventLevel.Information)
             .MinimumLevel.Override("System", LogEventLevel.Warning)
             .Enrich.FromLogContext()
+            .Enrich.WithSpan()
+            .Enrich.With<CallerEnricher>()
             .Enrich.WithEnvironmentName()
             .Enrich.WithMachineName()
             .Enrich.WithThreadId()
-            .Enrich.WithProperty("Application", "CleanHrApi")
+            .Enrich.WithProperty("ServiceName", "DepartmentService")
             .WriteTo.Console(
                 outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj} {Properties:j}{NewLine}{Exception}",
                 formatProvider: CultureInfo.InvariantCulture)
             .WriteTo.GrafanaLoki(
                 "http://localhost:3100",
-                labels: new List<LokiLabel>
-                {
-                    new LokiLabel { Key = "app", Value = "cleanhr-api" },
-                    new LokiLabel { Key = "environment", Value = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production" }
-                })
+                labels:
+                [
+                    new LokiLabel { Key = "environment", Value = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production" },
+                    new LokiLabel { Key = "service_name", Value = "DepartmentService" }
+                ],
+                propertiesAsLabels:
+                [
+                    "TraceId",
+                    "SpanId",
+                    "ParentId",
+                ],
+                //textFormatter: new Serilog.Formatting.Compact.RenderedCompactJsonFormatter(),
+                leavePropertiesIntact: true)
             .CreateLogger();
     }
 }

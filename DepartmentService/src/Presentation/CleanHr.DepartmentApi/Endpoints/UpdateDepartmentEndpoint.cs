@@ -23,7 +23,7 @@ public sealed class UpdateDepartmentEndpoint : DepartmentEndpointBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesDefaultResponseType]
     [SwaggerOperation(Summary = "Update an existing employee by employee id and posting updated data.")]
-    public async Task<ActionResult> Put(Guid departmentId, UpdateDepartmentModel model)
+    public async Task<ActionResult> Put([FromQuery] Guid departmentId, [FromBody] UpdateDepartmentModel model)
     {
         if (departmentId != model.Id)
         {
@@ -32,19 +32,19 @@ public sealed class UpdateDepartmentEndpoint : DepartmentEndpointBase
         }
 
         UpdateDepartmentCommand command = new(departmentId, model.Name, model.Description, true);
-
         Result result = await _mediator.Send(command, HttpContext.RequestAborted);
+
+        if (result.IsException)
+        {
+            return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while updating the department.");
+        }
 
         if (result.IsSuccess == false)
         {
-            foreach (KeyValuePair<string, string> error in result.Errors)
-            {
-                ModelState.AddModelError(error.Key, error.Value);
-            }
-
+            AddModelErrorsToModelState(result.Errors);
             return ValidationProblem(ModelState);
         }
 
-        return Ok();
+        return Ok(model);
     }
 }

@@ -9,4 +9,11 @@ namespace CleanHr.DepartmentApi.Endpoints;
 [ApiExplorerSettings(GroupName = "Department Endpoints")]
 public abstract class DepartmentEndpointBase : ControllerBase
 {
+    protected void AddModelErrorsToModelState(Dictionary<string, string> errors)
+    {
+        foreach (KeyValuePair<string, string> error in errors)
+        {
+            ModelState.AddModelError(error.Key, error.Value);
+        }
+    }
 }
