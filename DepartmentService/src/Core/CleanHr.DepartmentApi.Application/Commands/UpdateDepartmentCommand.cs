@@ -48,7 +48,7 @@ internal sealed class UpdateDepartmentCommandHandler : IRequestHandler<UpdateDep
 
             _logger.LogInformation("Updating department with DepartmentId: {DepartmentId}", request.Id);
 
-            Department departmentToBeUpdated = await _departmentRepository.GetByIdAsync(request.Id);
+            Department departmentToBeUpdated = await _departmentRepository.GetByIdAsync(request.Id, cancellationToken);
 
             if (departmentToBeUpdated == null)
             {
@@ -73,7 +73,7 @@ internal sealed class UpdateDepartmentCommandHandler : IRequestHandler<UpdateDep
                 return setDescriptionResult;
             }
 
-            await _departmentRepository.UpdateAsync(departmentToBeUpdated);
+            await _departmentRepository.UpdateAsync(departmentToBeUpdated, cancellationToken);
 
             await _departmentCacheHandler.RemoveListAsync();
 

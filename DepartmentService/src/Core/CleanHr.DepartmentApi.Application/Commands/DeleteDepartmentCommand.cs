@@ -31,14 +31,14 @@ internal class DeleteDepartmentCommandHandler : IRequestHandler<DeleteDepartment
     {
         _ = request.ThrowIfNull(nameof(request));
 
-        Department department = await _departmentRepository.GetByIdAsync(request.Id);
+        Department department = await _departmentRepository.GetByIdAsync(request.Id, cancellationToken);
 
         if (department == null)
         {
             throw new EntityNotFoundException(typeof(Department), request.Id);
         }
 
-        await _departmentRepository.DeleteAsync(department);
+        await _departmentRepository.DeleteAsync(department, cancellationToken);
         await _departmentCacheHandler.RemoveListAsync();
     }
 }

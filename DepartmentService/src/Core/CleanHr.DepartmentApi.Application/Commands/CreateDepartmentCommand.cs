@@ -60,7 +60,7 @@ internal class CreateDepartmentCommandHandler : IRequestHandler<CreateDepartment
             }
 
             // Persist to the database
-            await _departmentRepository.InsertAsync(result.Value);
+            await _departmentRepository.InsertAsync(result.Value, cancellationToken);
 
             // Remove the cache
             await _departmentCacheHandler.RemoveListAsync();

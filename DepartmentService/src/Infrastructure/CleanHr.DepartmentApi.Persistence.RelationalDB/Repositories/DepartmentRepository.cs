@@ -12,7 +12,9 @@ namespace CleanHr.DepartmentApi.Persistence.RelationalDB.Repositories;
 
 internal sealed class DepartmentRepository(CleanHrDbContext dbContext) : IDepartmentRepository
 {
-    public Task<bool> ExistsAsync(Expression<Func<Department, bool>> condition, CancellationToken cancellationToken = default)
+    public Task<bool> ExistsAsync(
+        Expression<Func<Department, bool>> condition,
+        CancellationToken cancellationToken = default)
     {
         IQueryable<Department> queryable = dbContext.Set<Department>();
 
@@ -24,23 +26,23 @@ internal sealed class DepartmentRepository(CleanHrDbContext dbContext) : IDepart
         return queryable.AnyAsync(cancellationToken);
     }
 
-    public async Task<Department> GetByIdAsync(Guid departmentId)
+    public async Task<Department> GetByIdAsync(Guid departmentId, CancellationToken cancellationToken = default)
     {
         departmentId.ThrowIfEmpty(nameof(departmentId));
 
-        Department department = await dbContext.Set<Department>().FindAsync(departmentId);
+        Department department = await dbContext.Set<Department>().FindAsync([departmentId], cancellationToken);
         return department;
     }
 
-    public async Task InsertAsync(Department department)
+    public async Task InsertAsync(Department department, CancellationToken cancellationToken = default)
     {
         department.ThrowIfNull(nameof(department));
 
-        await dbContext.AddAsync(department);
-        await dbContext.SaveChangesAsync();
+        await dbContext.AddAsync(department, cancellationToken);
+        await dbContext.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task UpdateAsync(Department department)
+    public async Task UpdateAsync(Department department, CancellationToken cancellationToken = default)
     {
         department.ThrowIfNull(nameof(department));
 
@@ -52,14 +54,14 @@ internal sealed class DepartmentRepository(CleanHrDbContext dbContext) : IDepart
             dbContext.Update(department);
         }
 
-        await dbContext.SaveChangesAsync();
+        await dbContext.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task DeleteAsync(Department department)
+    public async Task DeleteAsync(Department department, CancellationToken cancellationToken = default)
     {
         department.ThrowIfNull(nameof(department));
 
         dbContext.Remove(department);
-        await dbContext.SaveChangesAsync();
+        await dbContext.SaveChangesAsync(cancellationToken);
     }
 }
