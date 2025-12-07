@@ -20,7 +20,7 @@ public sealed class GetDepartmentByIdEndpoint : DepartmentEndpointBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesDefaultResponseType]
     [SwaggerOperation(Summary = "Get the details of a department by department id.")]
-    public async Task<ActionResult<DepartmentDetailsDto>> GetDepartment(Guid departmentId)
+    public async Task<ActionResult<DepartmentDetailsDto>> GetDepartment([FromQuery] Guid departmentId)
     {
         if (departmentId == Guid.Empty)
         {

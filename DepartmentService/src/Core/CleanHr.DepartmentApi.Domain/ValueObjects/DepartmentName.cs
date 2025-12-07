@@ -24,17 +24,6 @@ public sealed class DepartmentName : ValueObject
 
     private void SetValue(string value)
     {
-        if (string.IsNullOrWhiteSpace(value))
-        {
-            throw new DomainValidationException(DepartmentDomainErrors.NameNullOrEmpty);
-        }
-
-        if (value.Length < _minLength || value.Length > _maxLength)
-        {
-            string errorMessage = DepartmentDomainErrors.GetNameLengthOutOfRangeErrorMessage(_minLength, _maxLength);
-            throw new DomainValidationException(errorMessage);
-        }
-
         Value = value;
     }
 }

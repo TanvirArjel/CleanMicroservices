@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using CleanHr.DepartmentApi.Application.Caching.Handlers;
+using CleanHr.DepartmentApi.Application.Constants;
 using CleanHr.DepartmentApi.Domain;
 using CleanHr.DepartmentApi.Domain.Aggregates;
 using MediatR;
@@ -16,7 +17,6 @@ public sealed record UpdateDepartmentCommand(
 
 internal sealed class UpdateDepartmentCommandHandler : IRequestHandler<UpdateDepartmentCommand, Result>
 {
-    private static readonly ActivitySource ActivitySource = new("CleanHr.DepartmentApi");
     private readonly IDepartmentRepository _departmentRepository;
     private readonly IDepartmentCacheHandler _departmentCacheHandler;
     private readonly ILogger<UpdateDepartmentCommandHandler> _logger;
@@ -33,7 +33,9 @@ internal sealed class UpdateDepartmentCommandHandler : IRequestHandler<UpdateDep
 
     public async Task<Result> Handle(UpdateDepartmentCommand request, CancellationToken cancellationToken)
     {
-        using var activity = ActivitySource.StartActivity("UpdateDepartment", ActivityKind.Internal);
+        using var activity = ApplicationActivityConstants.Source.StartActivity(
+            "UpdateDepartment",
+            ActivityKind.Internal);
         activity?.SetTag("department.id", request.Id.ToString());
         activity?.SetTag("department.name", request.Name);
 
@@ -48,15 +50,23 @@ internal sealed class UpdateDepartmentCommandHandler : IRequestHandler<UpdateDep
 
             _logger.LogInformation("Updating department with DepartmentId: {DepartmentId}", request.Id);
 
-            Department departmentToBeUpdated = await _departmentRepository.GetByIdAsync(request.Id, cancellationToken);
+            var departmentResult = await _departmentRepository.GetByIdAsync(request.Id, cancellationToken);
 
-            if (departmentToBeUpdated == null)
+            if (departmentResult.IsSuccess == false)
+            {
+                activity?.SetStatus(ActivityStatusCode.Error, "Failed to retrieve department");
+                _logger.LogWarning("Failed to retrieve department. DepartmentId: {DepartmentId}, Error: {Error}", request.Id, departmentResult.Error);
+                return departmentResult;
+            }
+
+            if (departmentResult.Value == null)
             {
                 activity?.SetStatus(ActivityStatusCode.Error, "Department not found");
                 _logger.LogWarning("Department not found. DepartmentId: {DepartmentId}", request.Id);
                 return Result.Failure("DepartmentId", $"The department with id '{request.Id}' was not found.");
             }
 
+            var departmentToBeUpdated = departmentResult.Value;
             Result setNameResult = await departmentToBeUpdated.SetNameAsync(_departmentRepository, request.Name);
             if (setNameResult.IsSuccess == false)
             {

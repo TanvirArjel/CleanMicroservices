@@ -42,7 +42,7 @@ public sealed class LoginUserCommand(string emailOrUserName, string password) : 
 
         public async Task<Result<AuthenticationResult>> Handle(LoginUserCommand request, CancellationToken cancellationToken)
         {
-            using var activity = ApplicationDiagnostics.ActivitySource.StartActivity("LoginUser", ActivityKind.Internal);
+            using var activity = ApplicationActivityConstants.Source.StartActivity("LoginUser", ActivityKind.Internal);
             activity.SetTag("login.identifier", request.EmailOrUserName);
 
             ApplicationMetrics.ActiveLogins.Add(1);
@@ -120,8 +120,8 @@ public sealed class LoginUserCommand(string emailOrUserName, string password) : 
         }
         private async Task<bool> ValidatePasswordAsync(ApplicationUser user, string password)
         {
-            using var activity = ApplicationDiagnostics.ActivitySource.StartActivity("ValidatePassword", ActivityKind.Internal);
-            activity?.SetTag(ApplicationDiagnostics.Tags.UserId, user.Id.ToString());
+            using var activity = ApplicationActivityConstants.Source.StartActivity("ValidatePassword", ActivityKind.Internal);
+            activity?.SetTag("userId", user.Id.ToString());
 
             _logger.LogDebug("Validating password for user {User}", user);
 
@@ -143,11 +143,10 @@ public sealed class LoginUserCommand(string emailOrUserName, string password) : 
 
         private async Task RecordLoginAsync(ApplicationUser user, CancellationToken cancellationToken)
         {
-            using var activity = ApplicationDiagnostics.ActivitySource.StartActivity(
+            using var activity = ApplicationActivityConstants.Source.StartActivity(
                "RecordLogin",
                 ActivityKind.Internal);
-
-            activity?.SetTag(ApplicationDiagnostics.Tags.UserId, user?.Id.ToString());
+            activity?.SetTag("userId", user?.Id.ToString());
 
             try
             {

@@ -3,10 +3,10 @@ using System.Diagnostics;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
-using CleanHr.AuthApi.Application.Telemetry;
 using CleanHr.AuthApi.Domain;
 using CleanHr.AuthApi.Domain.Models;
 using CleanHr.AuthApi.Domain.Repositories;
+using CleanHr.AuthApi.Persistence.RelationalDB.Constants;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using TanvirArjel.Extensions.Microsoft.DependencyInjection;
@@ -49,7 +49,7 @@ internal sealed class ApplicationUserRepository : IApplicationUserRepository
 
     public async Task<Result<ApplicationUser>> GetByEmailOrUserNameAsync(string emailOrUserName)
     {
-        using var activity = ApplicationDiagnostics.ActivitySource.StartActivity(
+        using var activity = InfrastructureActivityConstants.Source.StartActivity(
                "GetByEmailOrUserName",
                ActivityKind.Internal);
         activity.SetTag("query.identifier", emailOrUserName);
@@ -61,15 +61,7 @@ internal sealed class ApplicationUserRepository : IApplicationUserRepository
                 .Where(u => u.NormalizedEmail == normalizedEmailOrUserName || u.NormalizedUserName == normalizedEmailOrUserName)
                 .FirstOrDefaultAsync();
 
-            if (user != null)
-            {
-                _logger.LogInformation("User found with email/username: {EmailOrUserName}", emailOrUserName);
-            }
-            else
-            {
-                _logger.LogInformation("No user found with email/username: {EmailOrUserName}", emailOrUserName);
-            }
-
+            _logger.LogInformation("Retrieved user with email/username: {EmailOrUserName}, IsFound: {IsFound}", emailOrUserName, user != null);
             activity.SetStatus(ActivityStatusCode.Ok, "User retrieval successful");
             return Result<ApplicationUser>.Success(user);
         }

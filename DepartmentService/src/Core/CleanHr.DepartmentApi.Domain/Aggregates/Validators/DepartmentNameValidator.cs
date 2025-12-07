@@ -28,7 +28,7 @@ public class DepartmentNameValidator : AbstractValidator<string>
 
     protected async Task<bool> IsUniqueNameAsync(Guid id, string name, CancellationToken cancellationToken)
     {
-        bool isUnique = await _departmentRepository.ExistsAsync(d => d.Name == name && d.Id != id, cancellationToken) == false;
-        return isUnique;
+        Result<bool> existsResult = await _departmentRepository.ExistsAsync(d => d.Name == name && d.Id != id, cancellationToken);
+        return existsResult.IsSuccess && !existsResult.Value;
     }
 }

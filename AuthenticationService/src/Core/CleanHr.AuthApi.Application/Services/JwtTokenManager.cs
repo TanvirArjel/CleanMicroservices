@@ -50,7 +50,7 @@ public class JwtTokenManager
 
     public async Task<Result<AuthenticationResult>> GetTokenAsync(string userId)
     {
-        using var activity = ApplicationDiagnostics.ActivitySource.StartActivity("GetJwtToken", ActivityKind.Internal);
+        using var activity = ApplicationActivityConstants.Source.StartActivity("GetJwtToken", ActivityKind.Internal);
         activity?.SetTag("user.id", userId);
 
         if (string.IsNullOrWhiteSpace(userId))
@@ -78,7 +78,7 @@ public class JwtTokenManager
 
     public async Task<Result<AuthenticationResult>> GetTokenAsync(ApplicationUser user)
     {
-        using var activity = ApplicationDiagnostics.ActivitySource.StartActivity("GetJwtToken", ActivityKind.Internal);
+        using var activity = ApplicationActivityConstants.Source.StartActivity("GetJwtToken", ActivityKind.Internal);
         activity?.SetTag("user.id", user?.Id.ToString());
 
         var result = await GetTokenAsync(user, oldRefreshToken: null);
@@ -97,7 +97,7 @@ public class JwtTokenManager
 
     public async Task<Result<AuthenticationResult>> GetTokenAsync(string accessToken, string refreshToken)
     {
-        using var activity = ApplicationDiagnostics.ActivitySource.StartActivity(
+        using var activity = ApplicationActivityConstants.Source.StartActivity(
                "GenerateJwtToken",
                ActivityKind.Internal);
 

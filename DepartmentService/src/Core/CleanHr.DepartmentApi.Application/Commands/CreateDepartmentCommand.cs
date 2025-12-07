@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using CleanHr.DepartmentApi.Application.Caching.Handlers;
+using CleanHr.DepartmentApi.Application.Constants;
 using CleanHr.DepartmentApi.Domain;
 using CleanHr.DepartmentApi.Domain.Aggregates;
 using MediatR;
@@ -12,7 +13,6 @@ public sealed record CreateDepartmentCommand(string Name, string Description) : 
 
 internal class CreateDepartmentCommandHandler : IRequestHandler<CreateDepartmentCommand, Result<Guid>>
 {
-    private static readonly ActivitySource ActivitySource = new("CleanHr.DepartmentApi");
     private readonly IDepartmentRepository _departmentRepository;
     private readonly IDepartmentCacheHandler _departmentCacheHandler;
     private readonly ILogger<CreateDepartmentCommandHandler> _logger;
@@ -33,7 +33,9 @@ internal class CreateDepartmentCommandHandler : IRequestHandler<CreateDepartment
 
     public async Task<Result<Guid>> Handle(CreateDepartmentCommand request, CancellationToken cancellationToken)
     {
-        using var activity = ActivitySource.StartActivity("CreateDepartment", ActivityKind.Internal);
+        using var activity = ApplicationActivityConstants.Source.StartActivity(
+            "CreateDepartment",
+            ActivityKind.Internal);
         activity?.SetTag("department.name", request.Name);
 
         using var loggerScope = _logger.BeginScope(new Dictionary<string, object>

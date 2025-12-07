@@ -1,4 +1,5 @@
 ﻿using CleanHr.DepartmentApi.Application.Commands;
+using CleanHr.DepartmentApi.Domain;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
@@ -30,7 +31,18 @@ public sealed class DeleteDepartmentEndpoint : DepartmentEndpointBase
         }
 
         DeleteDepartmentCommand command = new(departmentId);
-        await _mediator.Send(command, HttpContext.RequestAborted);
+        Result result = await _mediator.Send(command, HttpContext.RequestAborted);
+
+        if (result.IsException)
+        {
+            return StatusCode(StatusCodes.Status500InternalServerError, result.Error);
+        }
+
+        if (result.IsSuccess == false)
+        {
+            AddModelErrorsToModelState(result.Errors);
+            return ValidationProblem(ModelState);
+        }
 
         return NoContent();
     }
