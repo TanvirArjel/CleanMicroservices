@@ -10,14 +10,14 @@ using Moq;
 
 namespace CleanHr.DepartmentApi.Application.Tests.CommandTests;
 
-public class UpdateDepartmentCommandTests
+public class DeleteDepartmentCommandTests
 {
     private readonly Mock<IDepartmentRepository> _mockRepository;
     private readonly Mock<IDepartmentCacheHandler> _mockCacheHandler;
     private readonly Mock<ILogger<object>> _mockLogger;
     private readonly IMediator _mediator;
 
-    public UpdateDepartmentCommandTests()
+    public DeleteDepartmentCommandTests()
     {
         _mockRepository = new Mock<IDepartmentRepository>();
         _mockCacheHandler = new Mock<IDepartmentCacheHandler>();
@@ -25,6 +25,7 @@ public class UpdateDepartmentCommandTests
 
         // Setup MediatR with the handler
         var services = new ServiceCollection();
+        services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<DeleteDepartmentCommand>());
         services.AddSingleton(_mockRepository.Object);
         services.AddSingleton(_mockCacheHandler.Object);
 
@@ -33,8 +34,6 @@ public class UpdateDepartmentCommandTests
         mockLoggerFactory.Setup(x => x.CreateLogger(It.IsAny<string>())).Returns(_mockLogger.Object);
         services.AddSingleton(mockLoggerFactory.Object);
         services.AddSingleton(typeof(ILogger<>), typeof(Logger<>));
-
-        services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<UpdateDepartmentCommand>());
 
         var serviceProvider = services.BuildServiceProvider();
         _mediator = serviceProvider.GetRequiredService<IMediator>();
@@ -45,21 +44,17 @@ public class UpdateDepartmentCommandTests
     {
         // Arrange
         var departmentId = Guid.NewGuid();
-        var command = new UpdateDepartmentCommand(departmentId, "Updated IT", "This is Updated Description for the new IT Department", true);
+        var command = new DeleteDepartmentCommand(departmentId);
 
-        var existingDepartment = CreateDepartment(departmentId, "IT Department", "Old Description");
+        var existingDepartment = CreateDepartment(departmentId, "IT Department", "Description");
 
         _mockRepository
             .Setup(r => r.GetByIdAsync(departmentId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result<Department>.Success(existingDepartment));
 
         _mockRepository
-            .Setup(r => r.ExistsAsync(It.IsAny<Expression<Func<Department, bool>>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result<bool>.Success(false));
-
-        _mockRepository
-            .Setup(r => r.UpdateAsync(It.IsAny<Department>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((Department d, CancellationToken ct) => Result<Department>.Success(d));
+            .Setup(r => r.DeleteAsync(It.IsAny<Department>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Success());
 
         _mockCacheHandler
             .Setup(c => c.RemoveListAsync())
@@ -70,13 +65,10 @@ public class UpdateDepartmentCommandTests
 
         // Assert
         Assert.True(result.IsSuccess);
-        Assert.Equal("Updated IT", existingDepartment.Name);
-        Assert.Equal("This is Updated Description for the new IT Department", existingDepartment.Description);
-        Assert.True(existingDepartment.IsActive);
 
         // Verify repository methods were called
         _mockRepository.Verify(r => r.GetByIdAsync(departmentId, It.IsAny<CancellationToken>()), Times.Once);
-        _mockRepository.Verify(r => r.UpdateAsync(It.IsAny<Department>(), It.IsAny<CancellationToken>()), Times.Once);
+        _mockRepository.Verify(r => r.DeleteAsync(It.IsAny<Department>(), It.IsAny<CancellationToken>()), Times.Once);
         _mockCacheHandler.Verify(c => c.RemoveListAsync(), Times.Once);
 
         // Verify logging occurred
@@ -84,7 +76,7 @@ public class UpdateDepartmentCommandTests
             x => x.Log(
                 LogLevel.Information,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Updating department")),
+                It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Deleting department")),
                 It.IsAny<Exception>(),
                 It.IsAny<Func<It.IsAnyType, Exception, string>>()),
             Times.AtLeastOnce);
@@ -93,91 +85,40 @@ public class UpdateDepartmentCommandTests
             x => x.Log(
                 LogLevel.Information,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Department updated successfully")),
+                It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Deleted department")),
                 It.IsAny<Exception>(),
                 It.IsAny<Func<It.IsAnyType, Exception, string>>()),
             Times.AtLeastOnce);
     }
 
     [Fact]
-    public async Task DepartmentNotFound_ReturnsFailure()
+    public async Task DepartmentNotFound_DoesNotDelete()
     {
         // Arrange
         var departmentId = Guid.NewGuid();
-        var command = new UpdateDepartmentCommand(departmentId, "Updated IT", "Updated Description", true);
+        var command = new DeleteDepartmentCommand(departmentId);
 
         _mockRepository
             .Setup(r => r.GetByIdAsync(departmentId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result<Department>.Success(null));
 
+        _mockRepository
+            .Setup(r => r.DeleteAsync(null, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Success());
+
+        _mockCacheHandler
+            .Setup(c => c.RemoveListAsync())
+            .Returns(Task.CompletedTask);
+
         // Act
         var result = await _mediator.Send(command, CancellationToken.None);
 
         // Assert
         Assert.False(result.IsSuccess);
-        Assert.Contains("not found", result.Error, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("Department not found", result.Error);
 
-        _mockRepository.Verify(r => r.UpdateAsync(It.IsAny<Department>(), It.IsAny<CancellationToken>()), Times.Never);
+        _mockRepository.Verify(r => r.DeleteAsync(null, It.IsAny<CancellationToken>()), Times.Never);
         _mockCacheHandler.Verify(c => c.RemoveListAsync(), Times.Never);
-    }
-
-    [Fact]
-    public async Task NullCommand_ThrowsArgumentNullException()
-    {
-        // Act & Assert
-        await Assert.ThrowsAsync<ArgumentNullException>(
-            async () => await _mediator.Send(null, CancellationToken.None));
-    }
-
-    [Fact]
-    public async Task DuplicateDepartmentName_ReturnsFailure()
-    {
-        // Arrange
-        var departmentId = Guid.NewGuid();
-        var command = new UpdateDepartmentCommand(departmentId, "Existing Department", "Updated Description", true);
-
-        var existingDepartment = CreateDepartment(departmentId, "IT Department", "Old Description");
-
-        _mockRepository
-            .Setup(r => r.GetByIdAsync(departmentId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result<Department>.Success(existingDepartment));
-
-        _mockRepository
-            .Setup(r => r.ExistsAsync(It.IsAny<Expression<Func<Department, bool>>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result<bool>.Success(true));
-
-        // Act
-        var result = await _mediator.Send(command, CancellationToken.None);
-
-        // Assert
-        Assert.False(result.IsSuccess);
-        Assert.NotNull(result.Error);
-
-        _mockRepository.Verify(r => r.UpdateAsync(It.IsAny<Department>(), It.IsAny<CancellationToken>()), Times.Never);
-        _mockCacheHandler.Verify(c => c.RemoveListAsync(), Times.Never);
-    }
-
-    [Fact]
-    public async Task EmptyName_ReturnsFailure()
-    {
-        // Arrange
-        var departmentId = Guid.NewGuid();
-        var command = new UpdateDepartmentCommand(departmentId, "", "Valid Description", true);
-
-        var existingDepartment = CreateDepartment(departmentId, "IT Department", "Old Description");
-
-        _mockRepository
-            .Setup(r => r.GetByIdAsync(departmentId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result<Department>.Success(existingDepartment));
-
-        // Act
-        var result = await _mediator.Send(command, CancellationToken.None);
-
-        // Assert
-        Assert.False(result.IsSuccess);
-        Assert.NotNull(result.Error);
-
-        _mockRepository.Verify(r => r.UpdateAsync(It.IsAny<Department>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -185,7 +126,7 @@ public class UpdateDepartmentCommandTests
     {
         // Arrange
         var departmentId = Guid.NewGuid();
-        var command = new UpdateDepartmentCommand(departmentId, "Updated IT", "Updated Description", true);
+        var command = new DeleteDepartmentCommand(departmentId);
 
         _mockRepository
             .Setup(r => r.GetByIdAsync(departmentId, It.IsAny<CancellationToken>()))
@@ -205,32 +146,48 @@ public class UpdateDepartmentCommandTests
             x => x.Log(
                 LogLevel.Error,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Exception occurred while updating department")),
+                It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Error occurred while deleting department")),
                 It.IsAny<Exception>(),
                 It.IsAny<Func<It.IsAnyType, Exception, string>>()),
             Times.AtLeastOnce);
     }
 
     [Fact]
-    public async Task GetByIdReturnsFailure_ReturnsFailure()
+    public async Task DeleteFails_DoesNotRemoveCache()
     {
         // Arrange
         var departmentId = Guid.NewGuid();
-        var command = new UpdateDepartmentCommand(departmentId, "Updated IT", "Updated Description", true);
+        var command = new DeleteDepartmentCommand(departmentId);
+
+        var existingDepartment = CreateDepartment(departmentId, "IT Department", "Description");
 
         _mockRepository
             .Setup(r => r.GetByIdAsync(departmentId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result<Department>.Failure("Error", "Failed to retrieve department"));
+            .ReturnsAsync(Result<Department>.Success(existingDepartment));
+
+        _mockRepository
+            .Setup(r => r.DeleteAsync(It.IsAny<Department>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Failure("DeleteError", "Failed to delete department"));
 
         // Act
         var result = await _mediator.Send(command, CancellationToken.None);
 
         // Assert
         Assert.False(result.IsSuccess);
-        Assert.Contains("Failed to retrieve department", result.Error);
+        Assert.Contains("Failed to delete department", result.Error);
 
-        _mockRepository.Verify(r => r.UpdateAsync(It.IsAny<Department>(), It.IsAny<CancellationToken>()), Times.Never);
+        _mockRepository.Verify(r => r.DeleteAsync(It.IsAny<Department>(), It.IsAny<CancellationToken>()), Times.Once);
         _mockCacheHandler.Verify(c => c.RemoveListAsync(), Times.Never);
+
+        // Verify error logging occurred
+        _mockLogger.Verify(
+            x => x.Log(
+                LogLevel.Warning,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Failed to delete department with ID")),
+                It.IsAny<Exception>(),
+                It.IsAny<Func<It.IsAnyType, Exception, string>>()),
+            Times.AtLeastOnce);
     }
 
     // Helper method to create a Department instance using reflection

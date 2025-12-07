@@ -57,14 +57,22 @@ public sealed class DeleteDepartmentCommand : IRequest<Result>
                     return departmentResult;
                 }
 
+                if (departmentResult.Value == null)
+                {
+                    _logger.LogWarning("Department with ID: {DepartmentId} not found.", request.Id);
+                    return Result.Failure("DepartmentId", "Department not found with the given ID.");
+                }
+
                 var department = departmentResult.Value;
                 var deletionResult = await _departmentRepository.DeleteAsync(department, cancellationToken);
 
-                if (deletionResult.IsSuccess)
+                if (deletionResult.IsSuccess == false)
                 {
-                    await _departmentCacheHandler.RemoveListAsync();
+                    _logger.LogWarning("Failed to delete department with ID: {DepartmentId}.", request.Id);
+                    return deletionResult;
                 }
 
+                await _departmentCacheHandler.RemoveListAsync();
                 activity?.SetStatus(deletionResult.IsSuccess ? ActivityStatusCode.Ok : ActivityStatusCode.Error);
                 _logger.LogInformation("Deleted department with ID: {DepartmentId}", request.Id);
                 return deletionResult;
