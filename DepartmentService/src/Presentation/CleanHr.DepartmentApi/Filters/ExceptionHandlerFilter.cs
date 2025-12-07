@@ -1,6 +1,4 @@
 ﻿using System.Text;
-using CleanHr.DepartmentApi.Application.Extensions;
-using CleanHr.DepartmentApi.Domain.Exceptions;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
@@ -11,32 +9,16 @@ namespace CleanHr.DepartmentApi.Filters;
 
 internal sealed class ExceptionHandlerFilter : IAsyncExceptionFilter
 {
-    private readonly ILogger<ExceptionHandlerFilter> _exceptionLogger;
+    private readonly ILogger<ExceptionHandlerFilter> _logger;
 
-    public ExceptionHandlerFilter(ILogger<ExceptionHandlerFilter> exceptionLogger)
+    public ExceptionHandlerFilter(ILogger<ExceptionHandlerFilter> logger)
     {
-        _exceptionLogger = exceptionLogger ?? throw new ArgumentNullException(nameof(exceptionLogger));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     public async Task OnExceptionAsync(ExceptionContext context)
     {
         context.ThrowIfNull(nameof(context));
-
-        // DomainValidationException should be treated as a validation error.
-        if (context.Exception is DomainValidationException)
-        {
-            context.ModelState.AddModelError(string.Empty, context.Exception.Message);
-            context.Result = new BadRequestObjectResult(new ValidationProblemDetails(context.ModelState));
-            return;
-        }
-
-        // EntityNotFoundException should be treated as a validation error.
-        if (context.Exception is EntityNotFoundException)
-        {
-            context.ModelState.AddModelError(string.Empty, context.Exception.Message);
-            context.Result = new BadRequestObjectResult(new ValidationProblemDetails(context.ModelState));
-            return;
-        }
 
         HttpRequest httpRequest = context.HttpContext.Request;
         string requestPath = httpRequest.GetEncodedUrl();
@@ -61,7 +43,7 @@ internal sealed class ExceptionHandlerFilter : IAsyncExceptionFilter
             { "RequestBody", requestBoy }
         };
 
-        _exceptionLogger.LogException(context.Exception, $"Error occurred while processing request to {requestPath}", fields);
+        _logger.LogError(context.Exception, "Error occurred while processing request to {RequestPath}", fields);
 
         context.Result = new StatusCodeResult(500);
     }

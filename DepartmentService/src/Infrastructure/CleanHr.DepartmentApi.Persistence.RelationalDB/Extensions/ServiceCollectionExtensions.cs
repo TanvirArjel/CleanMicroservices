@@ -1,5 +1,5 @@
 ﻿using System;
-using CleanHr.DepartmentApi.Domain.Aggregates;
+using CleanHr.DepartmentApi.Domain.Repositories;
 using CleanHr.DepartmentApi.Persistence.RelationalDB.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;

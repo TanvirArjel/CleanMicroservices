@@ -30,9 +30,14 @@ public sealed class GetDepartmentSelectListEndpoint : DepartmentEndpointBase
         }
 
         GetDepartmentListQuery departmentListQuery = new();
-        List<DepartmentDto> departmentDtos = await _mediator.Send(departmentListQuery, HttpContext.RequestAborted);
+        var departmentDtosResult = await _mediator.Send(departmentListQuery, HttpContext.RequestAborted);
 
-        SelectList selectList = new(departmentDtos, "Id", "Name", selectedDepartment);
-        return selectList;
+        if (departmentDtosResult.IsSuccess)
+        {
+            SelectList selectList = new(departmentDtosResult.Value, "Id", "Name", selectedDepartment);
+            return selectList;
+        }
+
+        return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while retrieving the department select list.");
     }
 }

@@ -2,7 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using CleanHr.DepartmentApi.Domain.Aggregates;
+using CleanHr.DepartmentApi.Domain.Models;
+using CleanHr.DepartmentApi.Domain.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 

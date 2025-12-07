@@ -1,15 +1,16 @@
 ﻿using System.Diagnostics;
 using CleanHr.DepartmentApi.Application.Caching.Repositories;
 using CleanHr.DepartmentApi.Application.Constants;
+using CleanHr.DepartmentApi.Domain;
 using MediatR;
 using Microsoft.Extensions.Logging;
 using TanvirArjel.ArgumentChecker;
 
 namespace CleanHr.DepartmentApi.Application.Queries;
 
-public sealed class GetDepartmentListQuery : IRequest<List<DepartmentDto>>
+public sealed class GetDepartmentListQuery : IRequest<Result<List<DepartmentDto>>>
 {
-    private class GetDepartmentListQueryHandler : IRequestHandler<GetDepartmentListQuery, List<DepartmentDto>>
+    private class GetDepartmentListQueryHandler : IRequestHandler<GetDepartmentListQuery, Result<List<DepartmentDto>>>
     {
         private readonly IDepartmentCacheRepository _departmentCacheRepository;
         private readonly ILogger<GetDepartmentListQueryHandler> _logger;
@@ -22,7 +23,9 @@ public sealed class GetDepartmentListQuery : IRequest<List<DepartmentDto>>
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
-        public async Task<List<DepartmentDto>> Handle(GetDepartmentListQuery request, CancellationToken cancellationToken)
+        public async Task<Result<List<DepartmentDto>>> Handle(
+            GetDepartmentListQuery request,
+            CancellationToken cancellationToken)
         {
             using var activity = ApplicationActivityConstants.Source.StartActivity(
                 "GetDepartmentList",
@@ -31,12 +34,16 @@ public sealed class GetDepartmentListQuery : IRequest<List<DepartmentDto>>
             {
                 request.ThrowIfNull(nameof(request));
                 List<DepartmentDto> departmentDtos = await _departmentCacheRepository.GetListAsync();
-                return departmentDtos;
+
+                activity?.SetStatus(ActivityStatusCode.Ok, "Department list retrieved successfully");
+                _logger.LogInformation("Department list retrieved successfully. Total Departments: {DepartmentCount}", departmentDtos.Count);
+                return Result<List<DepartmentDto>>.Success(departmentDtos);
             }
             catch (Exception ex)
             {
+                activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
                 _logger.LogError(ex, "Error occurred while handling GetDepartmentListQuery");
-                throw;
+                return Result<List<DepartmentDto>>.Failure("Exception", "An error occurred while retrieving the department list.");
             }
         }
     }

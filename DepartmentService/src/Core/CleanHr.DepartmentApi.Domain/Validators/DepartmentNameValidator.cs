@@ -1,9 +1,10 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using CleanHr.DepartmentApi.Domain.Repositories;
 using FluentValidation;
 
-namespace CleanHr.DepartmentApi.Domain.Aggregates.Validators;
+namespace CleanHr.DepartmentApi.Domain.Validators;
 
 public class DepartmentNameValidator : AbstractValidator<string>
 {

@@ -22,7 +22,13 @@ public sealed class GetDepartmentListEndpoint : DepartmentEndpointBase
     public async Task<ActionResult<List<DepartmentDto>>> Get()
     {
         GetDepartmentListQuery departmentListQuery = new();
-        List<DepartmentDto> departmentDetailsDtos = await _mediator.Send(departmentListQuery, HttpContext.RequestAborted);
-        return departmentDetailsDtos;
+        var departmentDetailsResult = await _mediator.Send(departmentListQuery, HttpContext.RequestAborted);
+
+        if (departmentDetailsResult.IsSuccess)
+        {
+            return Ok(departmentDetailsResult.Value);
+        }
+
+        return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while retrieving the department list.");
     }
 }

@@ -1,5 +1,5 @@
 ﻿using CleanHr.DepartmentApi.Application.Queries;
-using CleanHr.DepartmentApi.Domain.Aggregates;
+using CleanHr.DepartmentApi.Domain.Models;
 using TanvirArjel.Extensions.Microsoft.DependencyInjection;
 
 namespace CleanHr.DepartmentApi.Application.Caching.Repositories;

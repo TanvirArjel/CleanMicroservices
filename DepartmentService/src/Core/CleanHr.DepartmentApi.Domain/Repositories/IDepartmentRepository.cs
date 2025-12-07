@@ -2,8 +2,9 @@
 using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
+using CleanHr.DepartmentApi.Domain.Models;
 
-namespace CleanHr.DepartmentApi.Domain.Aggregates;
+namespace CleanHr.DepartmentApi.Domain.Repositories;
 
 public interface IDepartmentRepository
 {

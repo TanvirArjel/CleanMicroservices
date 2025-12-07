@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
-using CleanHr.DepartmentApi.Domain.Aggregates.Validators;
 using CleanHr.DepartmentApi.Domain.Primitives;
+using CleanHr.DepartmentApi.Domain.Repositories;
+using CleanHr.DepartmentApi.Domain.Validators;
 using FluentValidation.Results;
 
-namespace CleanHr.DepartmentApi.Domain.Aggregates;
+namespace CleanHr.DepartmentApi.Domain.Models;
 
 public sealed class Department : AggregateRoot, ITimeFields
 {

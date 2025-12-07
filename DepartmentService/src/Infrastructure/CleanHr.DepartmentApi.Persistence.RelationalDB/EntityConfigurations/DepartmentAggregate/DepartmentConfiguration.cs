@@ -1,5 +1,5 @@
 ﻿using System;
-using CleanHr.DepartmentApi.Domain.Aggregates;
+using CleanHr.DepartmentApi.Domain.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 

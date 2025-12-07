@@ -1,5 +1,5 @@
 ﻿using System.Threading.Tasks;
-using CleanHr.DepartmentApi.Domain.Aggregates;
+using CleanHr.DepartmentApi.Domain.Repositories;
 using CleanHr.DepartmentApi.Persistence.RelationalDB.SeedData;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
