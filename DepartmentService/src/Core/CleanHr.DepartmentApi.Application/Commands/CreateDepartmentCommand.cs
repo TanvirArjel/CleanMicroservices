@@ -68,7 +68,7 @@ public sealed class CreateDepartmentCommand : IRequest<Result<Guid>>
                 {
                     activity?.SetStatus(ActivityStatusCode.Error, "Department creation failed");
                     _logger.LogWarning("Department creation failed with Errors: {Errors}", result.Error);
-                    return Result<Guid>.Failure(result.Error);
+                    return Result<Guid>.Failure(result.Errors);
                 }
 
                 // Persist to the database
