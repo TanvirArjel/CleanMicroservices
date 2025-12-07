@@ -4,12 +4,14 @@ using CleanHr.AuthApi.Domain;
 using CleanHr.AuthApi.Features.User.Models;
 using MediatR;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 
 namespace CleanHr.AuthApi.Features.User.Endpoints;
 
 [ApiVersion("1.0")]
+[Authorize]
 public class UserLogoutEndpoint(IMediator mediator) : UserEndpointBase
 {
     [HttpPost("logout")]

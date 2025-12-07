@@ -191,7 +191,7 @@ public class JwtTokenManager
                 refreshToken = storeResult.Value;
             }
 
-            DateTime utcNow = DateTime.Now;
+            DateTime utcNow = DateTime.UtcNow;
 
             List<Claim> claims =
             [
@@ -203,7 +203,7 @@ public class JwtTokenManager
                 new Claim(JwtRegisteredClaimNames.Email, user.Email),
                 new Claim(JwtRegisteredClaimNames.GivenName, user.UserName),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-                new Claim(JwtRegisteredClaimNames.Iat, utcNow.ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture)),
+                // NOTE: iat (issued at), nbf (not before), and exp (expires) are automatically added by JwtSecurityToken
             ];
 
             IList<string> roles = await _userManager.GetRolesAsync(user).ConfigureAwait(false);
@@ -218,16 +218,21 @@ public class JwtTokenManager
 
             _logger.LogDebug("Generating JWT token for user {UserId}", user.Id);
 
-            SymmetricSecurityKey signingKey = new(Encoding.UTF8.GetBytes(_jwtConfig.Key));
+            const string SymmetricKeyId = "MyAppSharedSecretKey";
+            SymmetricSecurityKey signingKey = new(Encoding.UTF8.GetBytes(_jwtConfig.Key))
+            {
+                KeyId = SymmetricKeyId
+            };
+
             SigningCredentials signingCredentials = new(signingKey, SecurityAlgorithms.HmacSha256);
 
             JwtSecurityToken jwt = new(
-            signingCredentials: signingCredentials,
-            claims: claims,
-            notBefore: utcNow,
-            expires: utcNow.AddSeconds(_jwtConfig.TokenLifeTime),
-            audience: _jwtConfig.Issuer,
-            issuer: _jwtConfig.Issuer);
+                signingCredentials: signingCredentials,
+                claims: claims,
+                notBefore: utcNow,
+                expires: utcNow.AddSeconds(_jwtConfig.TokenLifeTime),
+                audience: _jwtConfig.Issuer,
+                issuer: _jwtConfig.Issuer);
 
             JwtSecurityTokenHandler jwtSecurityTokenHandler = new();
             jwtSecurityTokenHandler.OutboundClaimTypeMap.Clear();
@@ -257,6 +262,8 @@ public class JwtTokenManager
             ValidateAudience = true,
             ValidateIssuer = true,
             ValidateIssuerSigningKey = true,
+            ValidIssuer = _jwtConfig.Issuer,
+            ValidAudience = _jwtConfig.Issuer,
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtConfig.Key)),
             // SECURITY: Set to false because we're explicitly parsing EXPIRED tokens during refresh flow
             // The refresh token validation provides the security check, not the expired access token

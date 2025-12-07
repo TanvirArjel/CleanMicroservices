@@ -101,15 +101,15 @@ public class Result<T> : Result
         new(true, string.Empty, value);
 
     public static new Result<T> Failure(string error) =>
-        new(false, error, default!);
+        new(false, error, default);
 
     public static new Result<T> Failure(string errorKey, string error) =>
-       new(false, errorKey, error, default!);
+       new(false, errorKey, error, default);
 
     public static new Result<T> Failure(Dictionary<string, string> errors) =>
-        new(false, errors, default!);
+        new(false, errors, default);
 
     public static new Result<T> Failure(IDictionary<string, string[]> errors) =>
-        new(false, errors, default!);
+        new(false, errors, default);
 }
 

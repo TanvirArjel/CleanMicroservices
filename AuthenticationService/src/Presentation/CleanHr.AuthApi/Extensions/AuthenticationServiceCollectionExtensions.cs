@@ -6,6 +6,7 @@ using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.IdentityModel.Tokens;
 using TanvirArjel.ArgumentChecker;
 using CleanHr.AuthApi.Application.Services;
+using Microsoft.Extensions.Logging;
 
 namespace CleanHr.AuthApi.Extensions;
 
@@ -23,15 +24,57 @@ internal static class AuthenticationServiceCollectionExtensions
         })
         .AddJwtBearer(options =>
         {
+            const string SymmetricKeyId = "MyAppSharedSecretKey"; // Must match the ID used in GetTokenAsync
+            SymmetricSecurityKey validationKey = new(Encoding.UTF8.GetBytes(jwtConfig.Key))
+            {
+                KeyId = SymmetricKeyId
+            };
+
             options.TokenValidationParameters = new TokenValidationParameters()
             {
                 ValidateIssuer = true,
                 ValidateAudience = true,
                 ValidateLifetime = true,
-                ValidateIssuerSigningKey = true,
                 ValidIssuer = jwtConfig.Issuer,
                 ValidAudience = jwtConfig.Issuer,
-                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtConfig.Key))
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = validationKey,
+            };
+
+            options.Events = new JwtBearerEvents
+            {
+                OnAuthenticationFailed = context =>
+                {
+                    var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<JwtBearerEvents>>();
+                    // Log the exception that caused the failure
+                    logger.LogError(context.Exception, "JWT Token Validation failed. The reason is: {Message}", context.Exception.Message);
+
+                    // The token string might be available for diagnostic purposes
+                    var token = context.Properties.Items.TryGetValue(".Token.id", out var tokenValue)
+                                                                                ? tokenValue : "Not available in context.";
+                    logger.LogWarning("Failed token (partial/full): {Token}", token);
+                    return Task.CompletedTask;
+                },
+                OnTokenValidated = context =>
+                {
+                    var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<JwtBearerEvents>>();
+                    logger.LogInformation("Token validated successfully for user: {User}", context.Principal?.Identity?.Name);
+                    return Task.CompletedTask;
+                },
+                OnMessageReceived = context =>
+                {
+                    var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<JwtBearerEvents>>();
+                    var authHeader = context.Request.Headers["Authorization"].ToString();
+                    logger.LogInformation("Authorization header: {AuthHeader}", authHeader);
+                    return Task.CompletedTask;
+                },
+                OnChallenge = context =>
+                {
+                    var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<JwtBearerEvents>>();
+                    logger.LogWarning("Authorization challenge. Error: {Error}, ErrorDescription: {ErrorDescription}",
+                        context.Error, context.ErrorDescription);
+                    return Task.CompletedTask;
+                }
             };
         });
     }

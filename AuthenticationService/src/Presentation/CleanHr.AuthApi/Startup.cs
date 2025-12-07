@@ -90,10 +90,9 @@ internal static class Startup
         services.AddSwaggerGeneration("Clean HR Auth API", "CleanHr.AuthApi");
 
         JwtConfig jwtConfig = new("SampleIdentity.com", "SampleIdentitySecretKeyNeedsToBeLongEnough", 86400);
-        services.AddJwtAuthentication(jwtConfig);
 
         services.AddJwtTokenGenerator(jwtConfig);
-
+        services.AddJwtAuthentication(jwtConfig);
         services.AddExternalLogins(builder.Configuration);
     }
 

@@ -20,15 +20,21 @@ internal static class AuthenticationServiceCollectionExtensions
         })
         .AddJwtBearer(options =>
         {
+            const string SymmetricKeyId = "MyAppSharedSecretKey";
+            SymmetricSecurityKey validationKey = new(Encoding.UTF8.GetBytes(jwtConfig.Key))
+            {
+                KeyId = SymmetricKeyId
+            };
+
             options.TokenValidationParameters = new TokenValidationParameters()
             {
                 ValidateIssuer = true,
                 ValidateAudience = true,
                 ValidateLifetime = true,
-                ValidateIssuerSigningKey = true,
                 ValidIssuer = jwtConfig.Issuer,
                 ValidAudience = jwtConfig.Issuer,
-                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtConfig.Key))
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = validationKey
             };
         });
     }
