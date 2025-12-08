@@ -18,6 +18,7 @@
   <Folder Name="/tests/">
     <Project Path="tests/CleanHr.DepartmentApi.Application.UnitTests/CleanHr.DepartmentApi.Application.UnitTests.csproj" />
     <Project Path="tests/CleanHr.DepartmentApi.Domain.UnitTests/CleanHr.DepartmentApi.Domain.UnitTests.csproj" />
+    <Project Path="tests/CleanHr.DepartmentApi.Persistence.RDB.UnitTests/CleanHr.DepartmentApi.Persistence.RDB.UnitTests.csproj" />
   </Folder>
 
 </Solution>

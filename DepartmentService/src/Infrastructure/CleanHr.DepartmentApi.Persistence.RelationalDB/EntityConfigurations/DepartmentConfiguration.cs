@@ -3,7 +3,7 @@ using CleanHr.DepartmentApi.Domain.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace CleanHr.DepartmentApi.Persistence.RelationalDB.EntityConfigurations.DepartmentAggregate;
+namespace CleanHr.DepartmentApi.Persistence.RelationalDB.EntityConfigurations;
 
 public class DepartmentConfiguration : IEntityTypeConfiguration<Department>
 {

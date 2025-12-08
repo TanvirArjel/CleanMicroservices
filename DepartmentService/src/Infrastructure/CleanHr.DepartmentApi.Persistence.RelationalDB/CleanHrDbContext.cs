@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
-using CleanHr.DepartmentApi.Persistence.RelationalDB.EntityConfigurations.DepartmentAggregate;
+using CleanHr.DepartmentApi.Persistence.RelationalDB.EntityConfigurations;
 using Microsoft.EntityFrameworkCore;
 
 namespace CleanHr.DepartmentApi.Persistence.RelationalDB;
