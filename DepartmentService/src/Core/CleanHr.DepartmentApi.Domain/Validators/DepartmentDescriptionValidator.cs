@@ -1,4 +1,5 @@
 using FluentValidation;
+using FluentValidation.Results;
 
 namespace CleanHr.DepartmentApi.Domain.Validators;
 
@@ -9,10 +10,21 @@ public class DepartmentDescriptionValidator : AbstractValidator<string>
         RuleFor(description => description)
                .Cascade(CascadeMode.Stop)
                .NotEmpty()
-               .WithMessage("The {PropertyName} is required.")
+               .WithMessage("The Description cannot be empty.")
                .MinimumLength(20)
-               .WithMessage("The {PropertyName} must be at least {MinLength} characters.")
+               .WithMessage("The Description must be at least 20 characters.")
                .MaximumLength(200)
-               .WithMessage("The {PropertyName} can't be more than {MaxLength} characters.");
+               .WithMessage("The Description can't be more than 200 characters.");
+    }
+
+    protected override bool PreValidate(ValidationContext<string> context, ValidationResult result)
+    {
+        if (context?.InstanceToValidate == null)
+        {
+            result?.Errors.Add(new ValidationFailure(nameof(context.InstanceToValidate), "The Description is required."));
+            return false;
+        }
+
+        return true;
     }
 }

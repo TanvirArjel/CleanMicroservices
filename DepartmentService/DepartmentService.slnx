@@ -15,8 +15,9 @@
   <Folder Name="/src/Presentation/">
     <Project Path="src/Presentation/CleanHr.DepartmentApi/CleanHr.DepartmentApi.csproj" />
   </Folder>
-  <Folder Name="/test/">
-    <Project Path="test/CleanHr.DepartmentApi.Application.Tests/CleanHr.DepartmentApi.Application.Tests.csproj" />
+  <Folder Name="/tests/">
+    <Project Path="tests/CleanHr.DepartmentApi.Application.UnitTests/CleanHr.DepartmentApi.Application.UnitTests.csproj" />
+    <Project Path="tests/CleanHr.DepartmentApi.Domain.UnitTests/CleanHr.DepartmentApi.Domain.UnitTests.csproj" />
   </Folder>
 
 </Solution>

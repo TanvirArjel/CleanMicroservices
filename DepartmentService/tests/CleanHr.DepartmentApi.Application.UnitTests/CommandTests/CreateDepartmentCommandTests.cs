@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using CleanHr.DepartmentApi.Application.Caching.Handlers;
 using CleanHr.DepartmentApi.Application.Commands;
 using CleanHr.DepartmentApi.Domain;
@@ -7,8 +8,9 @@ using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
+using Xunit;
 
-namespace CleanHr.DepartmentApi.Application.Tests.CommandTests;
+namespace CleanHr.DepartmentApi.Application.UnitTests.CommandTests;
 
 public class CreateDepartmentCommandTests
 {
