@@ -8,7 +8,7 @@ using FluentValidation.Results;
 
 namespace CleanHr.DepartmentApi.Domain.Models;
 
-public sealed class Department : AggregateRoot, ITimeFields
+public class Department : AggregateRoot, ITimeFields
 {
     private Department(Guid id)
     {
@@ -19,7 +19,7 @@ public sealed class Department : AggregateRoot, ITimeFields
 
     // This is needed for EF Core query mapping or deserialization.
     [JsonConstructor]
-    private Department()
+    public Department()
     {
     }
 

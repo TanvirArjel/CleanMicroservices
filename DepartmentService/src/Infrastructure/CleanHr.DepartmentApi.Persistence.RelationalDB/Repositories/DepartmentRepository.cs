@@ -44,7 +44,7 @@ internal sealed class DepartmentRepository : IDepartmentRepository
             }
 
             bool exists = await queryable.AnyAsync(cancellationToken);
-            activity.SetStatus(ActivityStatusCode.Ok, "Checked existence of department successfully");
+            activity?.SetStatus(ActivityStatusCode.Ok, "Checked existence of department successfully");
             _logger.LogInformation("Checked existence of department, exists: {Exists}", exists);
             return Result<bool>.Success(exists);
         }
@@ -69,9 +69,9 @@ internal sealed class DepartmentRepository : IDepartmentRepository
         {
             departmentId.ThrowIfEmpty(nameof(departmentId));
 
-            Department department = await _dbContext.Set<Department>().FindAsync([departmentId], cancellationToken);
+            Department department = await _dbContext.Set<Department>().FirstOrDefaultAsync(d => d.Id == departmentId, cancellationToken);
 
-            activity.SetStatus(ActivityStatusCode.Ok, "Fetched department by id successfully");
+            activity?.SetStatus(ActivityStatusCode.Ok, "Fetched department by id successfully");
             _logger.LogInformation("Fetched department by id: {DepartmentId}, isFound : {IsFound}", departmentId, department != null);
 
             return Result<Department>.Success(department);
@@ -98,7 +98,7 @@ internal sealed class DepartmentRepository : IDepartmentRepository
             await _dbContext.Set<Department>().AddAsync(department, cancellationToken);
             await _dbContext.SaveChangesAsync(cancellationToken);
 
-            activity.SetStatus(ActivityStatusCode.Ok, "Inserted new department successfully");
+            activity?.SetStatus(ActivityStatusCode.Ok, "Inserted new department successfully");
             _logger.LogInformation("Inserted new department with id: {DepartmentId}", department.Id);
             return Result<Department>.Success(department);
         }
