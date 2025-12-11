@@ -8,7 +8,7 @@ using FluentValidation.Results;
 
 namespace CleanHr.DepartmentApi.Domain.Models;
 
-public class Department : AggregateRoot, ITimeFields
+public sealed class Department : AggregateRoot, ITimeFields
 {
     private Department(Guid id)
     {

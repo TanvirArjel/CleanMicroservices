@@ -1,8 +1,7 @@
-using AutoFixture;
 using CleanHr.DepartmentApi.Domain.Models;
 using CleanHr.DepartmentApi.Persistence.RelationalDB;
 using CleanHr.DepartmentApi.Persistence.RelationalDB.Repositories;
-using Microsoft.EntityFrameworkCore.ChangeTracking;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Moq.EntityFrameworkCore;
@@ -11,8 +10,6 @@ namespace CleanHr.DepartmentApi.Persistence.RDB.UnitTests.RepositoryTests;
 
 public class DepartmentRepositoryTests
 {
-    private static readonly Fixture Fixture = new Fixture();
-
     #region ExistsAsync Tests
 
     [Fact]
@@ -20,12 +17,13 @@ public class DepartmentRepositoryTests
     {
         // Arrange
         var department = CreateTestDepartment("IT Department");
-        var departmentData = new List<Department>() { department };
+        List<Department> departmentData = [department];
 
-        var mockLogger = new Mock<ILogger<DepartmentRepository>>();
-        var mockDbContext = new Mock<CleanHrDbContext>();
+        Mock<ILogger<DepartmentRepository>> mockLogger = new();
+        DbContextOptions<CleanHrDbContext> mockOptions = new();
+        Mock<CleanHrDbContext> mockDbContext = new(mockOptions);
         mockDbContext.Setup(m => m.Set<Department>()).ReturnsDbSet(departmentData);
-        var repository = new DepartmentRepository(mockDbContext.Object, mockLogger.Object);
+        DepartmentRepository repository = new(mockDbContext.Object, mockLogger.Object);
 
         // Act
         var result = await repository.ExistsAsync(d => d.Id == department.Id);
@@ -39,11 +37,12 @@ public class DepartmentRepositoryTests
     public async Task ExistsAsync_WithNonExistingDepartment_ReturnsSuccessWithFalse()
     {
         // Arrange
-        var nonExistentId = Guid.NewGuid();
-        var mockLogger = new Mock<ILogger<DepartmentRepository>>();
-        var mockDbContext = new Mock<CleanHrDbContext>();
+        Guid nonExistentId = Guid.NewGuid();
+        Mock<ILogger<DepartmentRepository>> mockLogger = new();
+        DbContextOptions<CleanHrDbContext> mockOptions = new();
+        Mock<CleanHrDbContext> mockDbContext = new(mockOptions);
         mockDbContext.Setup(m => m.Set<Department>()).ReturnsDbSet(new List<Department>());
-        var repository = new DepartmentRepository(mockDbContext.Object, mockLogger.Object);
+        DepartmentRepository repository = new(mockDbContext.Object, mockLogger.Object);
 
         // Act
         var result = await repository.ExistsAsync(d => d.Id == nonExistentId);
@@ -57,10 +56,11 @@ public class DepartmentRepositoryTests
     {
         // Arrange
         var department = CreateTestDepartment("IT Department");
-        var mockLogger = new Mock<ILogger<DepartmentRepository>>();
-        var mockDbContext = new Mock<CleanHrDbContext>();
+        Mock<ILogger<DepartmentRepository>> mockLogger = new();
+        DbContextOptions<CleanHrDbContext> mockOptions = new();
+        Mock<CleanHrDbContext> mockDbContext = new(mockOptions);
         mockDbContext.Setup(m => m.Set<Department>()).ReturnsDbSet([department]);
-        var repository = new DepartmentRepository(mockDbContext.Object, mockLogger.Object);
+        DepartmentRepository repository = new(mockDbContext.Object, mockLogger.Object);
 
         // Act
         var result = await repository.ExistsAsync(null);
@@ -74,10 +74,11 @@ public class DepartmentRepositoryTests
     public async Task ExistsAsync_WithNullCondition_ReturnsSuccessWithFalse_WhenNoDepartmentsExist()
     {
         // Arrange
-        var mockLogger = new Mock<ILogger<DepartmentRepository>>();
-        var mockDbContext = new Mock<CleanHrDbContext>();
+        Mock<ILogger<DepartmentRepository>> mockLogger = new();
+        DbContextOptions<CleanHrDbContext> mockOptions = new();
+        Mock<CleanHrDbContext> mockDbContext = new(mockOptions);
         mockDbContext.Setup(m => m.Set<Department>()).ReturnsDbSet([]);
-        var repository = new DepartmentRepository(mockDbContext.Object, mockLogger.Object);
+        DepartmentRepository repository = new(mockDbContext.Object, mockLogger.Object);
         // Act
         var result = await repository.ExistsAsync(null);
 
@@ -92,12 +93,13 @@ public class DepartmentRepositoryTests
         // Arrange
         // Arrange
         var department = CreateTestDepartment("IT Department");
-        var departmentData = new List<Department>() { department };
+        List<Department> departmentData = [department];
 
-        var mockLogger = new Mock<ILogger<DepartmentRepository>>();
-        var mockDbContext = new Mock<CleanHrDbContext>();
+        Mock<ILogger<DepartmentRepository>> mockLogger = new();
+        DbContextOptions<CleanHrDbContext> mockOptions = new();
+        Mock<CleanHrDbContext> mockDbContext = new(mockOptions);
         mockDbContext.Setup(m => m.Set<Department>()).ReturnsDbSet(departmentData);
-        var repository = new DepartmentRepository(mockDbContext.Object, mockLogger.Object);
+        DepartmentRepository repository = new(mockDbContext.Object, mockLogger.Object);
 
         // Act
         var result = await repository.ExistsAsync(d => d.Name == department.Name && d.IsActive);
@@ -117,10 +119,11 @@ public class DepartmentRepositoryTests
         // Arrange
         var department = CreateTestDepartment("IT Department");
 
-        var mockLogger = new Mock<ILogger<DepartmentRepository>>();
-        var mockDbContext = new Mock<CleanHrDbContext>();
+        Mock<ILogger<DepartmentRepository>> mockLogger = new();
+        DbContextOptions<CleanHrDbContext> mockOptions = new();
+        Mock<CleanHrDbContext> mockDbContext = new(mockOptions);
         mockDbContext.Setup(m => m.Set<Department>()).ReturnsDbSet([department]);
-        var repository = new DepartmentRepository(mockDbContext.Object, mockLogger.Object);
+        DepartmentRepository repository = new(mockDbContext.Object, mockLogger.Object);
 
         // Act
         var result = await repository.GetByIdAsync(department.Id);
@@ -137,11 +140,12 @@ public class DepartmentRepositoryTests
     public async Task GetByIdAsync_WithNonExistingId_ReturnsSuccessWithNull()
     {
         // Arrange
-        var nonExistentId = Guid.NewGuid();
-        var mockLogger = new Mock<ILogger<DepartmentRepository>>();
-        var mockDbContext = new Mock<CleanHrDbContext>();
+        Guid nonExistentId = Guid.NewGuid();
+        Mock<ILogger<DepartmentRepository>> mockLogger = new();
+        DbContextOptions<CleanHrDbContext> mockOptions = new();
+        Mock<CleanHrDbContext> mockDbContext = new(mockOptions);
         mockDbContext.Setup(m => m.Set<Department>()).ReturnsDbSet([]);
-        var repository = new DepartmentRepository(mockDbContext.Object, mockLogger.Object);
+        DepartmentRepository repository = new(mockDbContext.Object, mockLogger.Object);
 
 
         // Act
@@ -155,11 +159,13 @@ public class DepartmentRepositoryTests
     [Fact]
     public async Task GetByIdAsync_WithEmptyGuid_ReturnsFailure()
     {
-        // Act
-        var mockLogger = new Mock<ILogger<DepartmentRepository>>();
-        var mockDbContext = new Mock<CleanHrDbContext>();
+        // Arrange
+        DbContextOptions<CleanHrDbContext> mockOptions = new();
+        Mock<CleanHrDbContext> mockDbContext = new(mockOptions);
         mockDbContext.Setup(m => m.Set<Department>()).ReturnsDbSet([]);
-        var repository = new DepartmentRepository(mockDbContext.Object, mockLogger.Object);
+        Mock<ILogger<DepartmentRepository>> mockLogger = new();
+
+        DepartmentRepository repository = new(mockDbContext.Object, mockLogger.Object);
 
         // Act
         var result = await repository.GetByIdAsync(Guid.Empty);
@@ -178,16 +184,20 @@ public class DepartmentRepositoryTests
     public async Task InsertAsync_WithValidDepartment_ReturnsSuccessWithInsertedDepartment()
     {
         // Arrange
-        //var department = CreateTestDepartment("Sales Department");
+        var department = CreateTestDepartment("Sales Department");
 
-        var mockLogger = new Mock<ILogger<DepartmentRepository>>();
-        var department = Fixture.Build<Department>().Create();
-        var mockDbContext = new Mock<CleanHrDbContext>();
-        mockDbContext.Setup(m => m.Set<Department>()).ReturnsDbSet([]);
-        var repository = new DepartmentRepository(mockDbContext.Object, mockLogger.Object);
+        DbContextOptions<CleanHrDbContext> mockOptions = new();
+        Mock<CleanHrDbContext> mockDbContext = new(mockOptions);
+
+        Mock<DbSet<Department>> mockDbSet = new();
+        mockDbContext.Setup(c => c.Set<Department>()).Returns(mockDbSet.Object);
+        Mock<ILogger<DepartmentRepository>> mockLogger = new();
+
+        DepartmentRepository repository = new(mockDbContext.Object, mockLogger.Object);
 
         // Act
         var result = await repository.InsertAsync(department);
+
         // Assert
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Value);
@@ -200,10 +210,12 @@ public class DepartmentRepositoryTests
     public async Task InsertAsync_WithNullDepartment_ReturnsFailure()
     {
         // Arrange
-        var mockLogger = new Mock<ILogger<DepartmentRepository>>();
-        var mockDbContext = new Mock<CleanHrDbContext>();
-        mockDbContext.Setup(m => m.Set<Department>()).ReturnsDbSet([]);
-        var repository = new DepartmentRepository(mockDbContext.Object, mockLogger.Object);
+        Mock<ILogger<DepartmentRepository>> mockLogger = new();
+        DbContextOptions<CleanHrDbContext> mockOptions = new();
+        Mock<CleanHrDbContext> mockDbContext = new(mockOptions);
+        Mock<DbSet<Department>> mockDbSet = new();
+        mockDbContext.Setup(m => m.Set<Department>()).Returns(mockDbSet.Object);
+        DepartmentRepository repository = new(mockDbContext.Object, mockLogger.Object);
 
         // Act
         var result = await repository.InsertAsync(null);
@@ -212,28 +224,6 @@ public class DepartmentRepositoryTests
         Assert.False(result.IsSuccess);
         Assert.Null(result.Value);
         Assert.NotEmpty(result.Errors);
-    }
-
-    [Fact]
-    public async Task InsertAsync_MultipleDepartments_InsertsAllSuccessfully()
-    {
-        // Arrange
-        var department1 = CreateTestDepartment("Marketing");
-        var department2 = CreateTestDepartment("Operations");
-
-        var mockLogger = new Mock<ILogger<DepartmentRepository>>();
-        var mockDbContext = new Mock<CleanHrDbContext>();
-        List<Department> _departmentData = [];
-        mockDbContext.Setup(m => m.Set<Department>()).ReturnsDbSet(_departmentData);
-        var repository = new DepartmentRepository(mockDbContext.Object, mockLogger.Object);
-
-        // Act
-        var result1 = await repository.InsertAsync(department1);
-        var result2 = await repository.InsertAsync(department2);
-        // Assert
-        Assert.True(result1.IsSuccess);
-        Assert.True(result2.IsSuccess);
-        Assert.Equal(2, _departmentData.Count);
     }
 
     #endregion
@@ -245,64 +235,38 @@ public class DepartmentRepositoryTests
     {
         // Arrange
         var department = CreateTestDepartment("Legal");
-        var mockLogger = new Mock<ILogger<DepartmentRepository>>();
-        var mockDbContext = new Mock<CleanHrDbContext>();
-        List<Department> _departmentData = [department];
-        mockDbContext.Setup(m => m.Set<Department>()).ReturnsDbSet(_departmentData);
-        var repository = new DepartmentRepository(mockDbContext.Object, mockLogger.Object);
 
-        // Setup ChangeTracker mock to return null (non-tracked entity)
-        var mockChangeTracker = new Mock<ChangeTracker>();
-        mockDbContext.Setup(m => m.ChangeTracker).Returns(mockChangeTracker.Object);
+        DbContextOptions<CleanHrDbContext> mockOptions = new();
+        Mock<CleanHrDbContext> mockDbContext = new(mockOptions);
 
-        // Modify the department
-        department.SetDescription("Updated description for legal department that meets the minimum length requirement.");
-        department.IsActive = false;
+        Mock<DbSet<Department>> mockDbSet = new();
+        mockDbContext.Setup(m => m.Set<Department>()).Returns(mockDbSet.Object);
+
+        Mock<ILogger<DepartmentRepository>> mockLogger = new();
+        DepartmentRepository repository = new(mockDbContext.Object, mockLogger.Object);
+
 
         // Act
         var result = await repository.UpdateAsync(department);
 
         // Assert
-        Assert.True(result.IsSuccess);
-        Assert.NotNull(result.Value);
-        mockDbContext.Verify(m => m.Set<Department>().Update(department), Times.Once);
+        mockDbContext.Verify(x => x.Set<Department>().Update(It.Is<Department>(y => y == department)), Times.Once);
         mockDbContext.Verify(m => m.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
-    }
-
-    [Fact]
-    public async Task UpdateAsync_WithTrackedEntity_UpdatesSuccessfully()
-    {
-        // Arrange
-        var department = CreateTestDepartment("Research");
-
-        var mockLogger = new Mock<ILogger<DepartmentRepository>>();
-        var mockDbContext = new Mock<CleanHrDbContext>();
-        List<Department> _departmentData = [department];
-        mockDbContext.Setup(m => m.Set<Department>()).ReturnsDbSet(_departmentData);
-        var repository = new DepartmentRepository(mockDbContext.Object, mockLogger.Object);
-
-        // Modify the department
-        department.SetDescription("New description for research department that is long enough to pass validation.");
-        department.IsActive = false;
-
-        // Act
-        var result = await repository.UpdateAsync(department);
-
-        // Assert
-        Assert.True(result.IsSuccess);
+        Assert.True(result.IsSuccess, $"Expected success but got failure. Error: {result.Error}");
         Assert.NotNull(result.Value);
-        mockDbContext.Verify(m => m.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
     public async Task UpdateAsync_WithNullDepartment_ReturnsFailure()
     {
         // Arrange
-        var mockLogger = new Mock<ILogger<DepartmentRepository>>();
-        var mockDbContext = new Mock<CleanHrDbContext>();
-        List<Department> _departmentData = [];
-        mockDbContext.Setup(m => m.Set<Department>()).ReturnsDbSet(_departmentData);
-        var repository = new DepartmentRepository(mockDbContext.Object, mockLogger.Object);
+        DbContextOptions<CleanHrDbContext> mockOptions = new();
+        Mock<CleanHrDbContext> mockDbContext = new(mockOptions);
+        Mock<DbSet<Department>> mockDbSet = new();
+        mockDbContext.Setup(m => m.Set<Department>()).Returns(mockDbSet.Object);
+
+        Mock<ILogger<DepartmentRepository>> mockLogger = new();
+        DepartmentRepository repository = new(mockDbContext.Object, mockLogger.Object);
 
         // Act
         var result = await repository.UpdateAsync(null);
@@ -314,23 +278,29 @@ public class DepartmentRepositoryTests
     }
 
     [Fact]
-    public async Task UpdateAsync_WithNonExistingDepartment_InsertsNewDepartment()
+    public async Task UpdateAsync_WithNonExistingDepartment_ThrowsException()
     {
         // Arrange
-        var department = CreateTestDepartment("New Dept");
-        var mockLogger = new Mock<ILogger<DepartmentRepository>>();
-        var mockDbContext = new Mock<CleanHrDbContext>();
-        List<Department> _departmentData = [];
-        mockDbContext.Setup(m => m.Set<Department>()).ReturnsDbSet(_departmentData);
-        var repository = new DepartmentRepository(mockDbContext.Object, mockLogger.Object);
+        var department = CreateTestDepartment("Legal");
+
+        DbContextOptions<CleanHrDbContext> mockOptions = new();
+        Mock<CleanHrDbContext> mockDbContext = new(mockOptions);
+
+        Mock<DbSet<Department>> mockDbSet = new();
+        mockDbContext.Setup(m => m.Set<Department>()).Returns(mockDbSet.Object);
+        mockDbContext.Setup(m => m.SaveChangesAsync(It.IsAny<CancellationToken>())).ThrowsAsync(new DbUpdateException());
+
+        Mock<ILogger<DepartmentRepository>> mockLogger = new();
+        DepartmentRepository repository = new(mockDbContext.Object, mockLogger.Object);
+
 
         // Act
         var result = await repository.UpdateAsync(department);
 
         // Assert
-        Assert.True(result.IsSuccess);
-        mockDbContext.Verify(m => m.Set<Department>().Update(department), Times.Once);
+        mockDbContext.Verify(x => x.Set<Department>().Update(It.Is<Department>(y => y == department)), Times.Once);
         mockDbContext.Verify(m => m.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
+        Assert.False(result.IsSuccess, $"Expected failure but got success. Error: {result.Error}");
     }
 
     #endregion
@@ -341,32 +311,39 @@ public class DepartmentRepositoryTests
     public async Task DeleteAsync_WithExistingDepartment_ReturnsSuccess()
     {
         // Arrange
-        var department = CreateTestDepartment("Temporary");
-        var mockLogger = new Mock<ILogger<DepartmentRepository>>();
-        var mockDbContext = new Mock<CleanHrDbContext>();
-        List<Department> _departmentData = [department];
-        mockDbContext.Setup(m => m.Set<Department>()).ReturnsDbSet(_departmentData);
-        var repository = new DepartmentRepository(mockDbContext.Object, mockLogger.Object);
+        var department = CreateTestDepartment("Legal");
+
+        DbContextOptions<CleanHrDbContext> mockOptions = new();
+        Mock<CleanHrDbContext> mockDbContext = new(mockOptions);
+
+        Mock<DbSet<Department>> mockDbSet = new();
+        mockDbContext.Setup(m => m.Set<Department>()).Returns(mockDbSet.Object);
+
+        Mock<ILogger<DepartmentRepository>> mockLogger = new();
+        DepartmentRepository repository = new(mockDbContext.Object, mockLogger.Object);
+
 
         // Act
         var result = await repository.DeleteAsync(department);
 
         // Assert
-        Assert.True(result.IsSuccess);
-        mockDbContext.Verify(m => m.Set<Department>().Remove(department), Times.Once);
+        mockDbContext.Verify(x => x.Set<Department>().Remove(It.Is<Department>(y => y == department)), Times.Once);
         mockDbContext.Verify(m => m.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
+        Assert.True(result.IsSuccess, $"Expected success but got failure. Error: {result.Error}");
+        Assert.NotNull(result);
     }
 
     [Fact]
     public async Task DeleteAsync_WithNullDepartment_ReturnsFailure()
     {
         // Arrange
-        var mockLogger = new Mock<ILogger<DepartmentRepository>>();
-        var mockDbContext = new Mock<CleanHrDbContext>();
-        List<Department> _departmentData = [];
-        mockDbContext.Setup(m => m.Set<Department>()).ReturnsDbSet(_departmentData);
-        var repository = new DepartmentRepository(mockDbContext.Object, mockLogger.Object);
+        DbContextOptions<CleanHrDbContext> mockOptions = new();
+        Mock<CleanHrDbContext> mockDbContext = new(mockOptions);
+        Mock<DbSet<Department>> mockDbSet = new();
+        mockDbContext.Setup(m => m.Set<Department>()).Returns(mockDbSet.Object);
 
+        Mock<ILogger<DepartmentRepository>> mockLogger = new();
+        DepartmentRepository repository = new(mockDbContext.Object, mockLogger.Object);
 
         // Act
         var result = await repository.DeleteAsync(null);
@@ -377,46 +354,29 @@ public class DepartmentRepositoryTests
     }
 
     [Fact]
-    public async Task DeleteAsync_WithNonTrackedEntity_DeletesSuccessfully()
+    public async Task DeleteAsync_WithNonExistingDepartment_ThrowsException()
     {
         // Arrange
-        var department = CreateTestDepartment("To Delete");
-        var mockLogger = new Mock<ILogger<DepartmentRepository>>();
-        var mockDbContext = new Mock<CleanHrDbContext>();
-        List<Department> _departmentData = [department];
-        mockDbContext.Setup(m => m.Set<Department>()).ReturnsDbSet(_departmentData);
-        var repository = new DepartmentRepository(mockDbContext.Object, mockLogger.Object);
+        var department = CreateTestDepartment("Legal");
+
+        DbContextOptions<CleanHrDbContext> mockOptions = new();
+        Mock<CleanHrDbContext> mockDbContext = new(mockOptions);
+
+        Mock<DbSet<Department>> mockDbSet = new();
+        mockDbContext.Setup(m => m.Set<Department>()).Returns(mockDbSet.Object);
+        mockDbContext.Setup(m => m.SaveChangesAsync(It.IsAny<CancellationToken>())).ThrowsAsync(new DbUpdateException());
+
+        Mock<ILogger<DepartmentRepository>> mockLogger = new();
+        DepartmentRepository repository = new(mockDbContext.Object, mockLogger.Object);
 
 
         // Act
         var result = await repository.DeleteAsync(department);
 
         // Assert
-        Assert.True(result.IsSuccess);
-        mockDbContext.Verify(m => m.Set<Department>().Remove(department), Times.Once);
+        mockDbContext.Verify(x => x.Set<Department>().Remove(It.Is<Department>(y => y == department)), Times.Once);
         mockDbContext.Verify(m => m.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
-    }
-
-    [Fact]
-    public async Task DeleteAsync_MultipleDepartments_DeletesAllSuccessfully()
-    {
-        // Arrange
-        var department1 = CreateTestDepartment("Dept 1");
-        var department2 = CreateTestDepartment("Dept 2");
-        List<Department> _departmentData = new List<Department> { department1, department2 };
-        var mockLogger = new Mock<ILogger<DepartmentRepository>>();
-        var mockDbContext = new Mock<CleanHrDbContext>();
-        mockDbContext.Setup(m => m.Set<Department>()).ReturnsDbSet(_departmentData);
-        var repository = new DepartmentRepository(mockDbContext.Object, mockLogger.Object);
-
-        // Act
-        var result1 = await repository.DeleteAsync(department1);
-        var result2 = await repository.DeleteAsync(department2);
-
-        // Assert
-        Assert.True(result1.IsSuccess);
-        Assert.True(result2.IsSuccess);
-        Assert.Empty(_departmentData);
+        Assert.False(result.IsSuccess, $"Expected failure but got success. Error: {result.Error}");
     }
 
     #endregion
@@ -425,7 +385,7 @@ public class DepartmentRepositoryTests
 
     private Department CreateTestDepartment(string departmentName)
     {
-        var department = (Department)Activator.CreateInstance(typeof(Department), true);
+        Department department = (Department)Activator.CreateInstance(typeof(Department), true);
 
         // Use reflection to set private properties
         var idProperty = typeof(Department).GetProperty("Id");

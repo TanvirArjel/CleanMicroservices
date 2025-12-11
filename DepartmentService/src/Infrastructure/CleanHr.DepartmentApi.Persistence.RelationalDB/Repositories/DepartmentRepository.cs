@@ -9,7 +9,6 @@ using CleanHr.DepartmentApi.Domain.Models;
 using CleanHr.DepartmentApi.Domain.Repositories;
 using CleanHr.DepartmentApi.Persistence.RelationalDB.Constants;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.Extensions.Logging;
 using TanvirArjel.ArgumentChecker;
 
@@ -121,15 +120,18 @@ internal sealed class DepartmentRepository : IDepartmentRepository
         {
             department.ThrowIfNull(nameof(department));
 
-            EntityEntry<Department> trackedEntity = _dbContext.ChangeTracker.Entries<Department>()
-                .FirstOrDefault(x => x.Entity == department);
-            if (trackedEntity == null)
-            {
-                _dbContext.Update(department);
-            }
+            // EntityEntry<Department> trackedEntity = _dbContext.ChangeTracker.Entries<Department>()
+            //     .FirstOrDefault(x => x.Entity == department);
+
+            // if (trackedEntity == null)
+            // {
+            //     _dbContext.Set<Department>().Update(department);
+            // }
+
+            _dbContext.Set<Department>().Update(department);
             await _dbContext.SaveChangesAsync(cancellationToken);
 
-            activity.SetStatus(ActivityStatusCode.Ok, "Updated department successfully");
+            activity?.SetStatus(ActivityStatusCode.Ok, "Updated department successfully");
             _logger.LogInformation("Updated department with id: {DepartmentId}", department.Id);
             return Result<Department>.Success(department);
         }
@@ -152,10 +154,10 @@ internal sealed class DepartmentRepository : IDepartmentRepository
         {
             department.ThrowIfNull(nameof(department));
 
-            _dbContext.Remove(department);
+            _dbContext.Set<Department>().Remove(department);
             await _dbContext.SaveChangesAsync(cancellationToken);
 
-            activity.SetStatus(ActivityStatusCode.Ok, "Deleted department successfully");
+            activity?.SetStatus(ActivityStatusCode.Ok, "Deleted department successfully");
             _logger.LogInformation("Deleted department with id: {DepartmentId}", department.Id);
             return Result.Success();
         }

@@ -11,9 +11,6 @@ namespace CleanHr.DepartmentApi.Persistence.RelationalDB;
 
 internal class CleanHrDbContext : DbContext
 {
-    public CleanHrDbContext()
-    {
-    }
     public CleanHrDbContext(DbContextOptions<CleanHrDbContext> options) : base(options)
     {
     }

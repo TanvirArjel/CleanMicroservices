@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using CleanHr.DepartmentApi.Application.Caching.Repositories;
 using CleanHr.DepartmentApi.Application.Queries;
 using MediatR;

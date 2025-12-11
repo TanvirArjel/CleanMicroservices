@@ -1,4 +1,3 @@
-using System;
 using System.Linq.Expressions;
 using CleanHr.DepartmentApi.Application.Queries;
 using MediatR;
