@@ -10,25 +10,38 @@ public class DepartmentDescriptionValidatorTests
     {
         _validator = new DepartmentDescriptionValidator();
     }
+    public static TheoryData<string> ValidDescriptionTestData => new()
+    {
+        // { validDescription }
+        { "This is a valid description with sufficient length for validation." },
+        { new string('A', 20) }, // Minimum length
+        { new string('A', 200) } // Maximum length
+    };
+
+    public static TheoryData<string, string> InvalidDescriptionTestData => new()
+    {
+        // { invalidDescription, expectedErrorMessage }
+        { null, "The Description is required." },
+        { "", "The Description cannot be empty." },
+        { "   ", "The Description cannot be empty." },
+        { new string('A', 19), "The Description must be at least 20 characters." },
+        { new string('A', 201), "The Description can't be more than 200 characters." }
+    };
+
 
     [Theory]
-    [InlineData("This is a valid description with sufficient length for validation.")]
+    [MemberData(nameof(ValidDescriptionTestData))]
     public async Task ValidDescription_PassesValidation(string validDescription)
     {
-        // Arrange
-        var description = validDescription;
         // Act
-        var result = await _validator.ValidateAsync(description);
+        var result = await _validator.ValidateAsync(validDescription);
 
         // Assert
         Assert.True(result.IsValid);
     }
 
     [Theory]
-    [InlineData(null, "The Description is required.")] // null case
-    [InlineData("", "The Description cannot be empty.")] // empty string case
-    [InlineData("   ", "The Description cannot be empty.")] // whitespace case
-    [InlineData("Short 19 characters", "The Description must be at least 20 characters.")] // too short case
+    [MemberData(nameof(InvalidDescriptionTestData))]
     public async Task InvalidDescription_FailsValidation(string invalidDescription, string errorMessage)
     {
         // Act
@@ -38,20 +51,5 @@ public class DepartmentDescriptionValidatorTests
         Assert.False(result.IsValid);
         Assert.NotEmpty(result.Errors);
         Assert.Contains(result.Errors, e => e.ErrorMessage == errorMessage);
-    }
-
-    [Fact]
-    public async Task DescriptionTooLong_FailsValidation()
-    {
-        // Arrange
-        var longDescription = new string('A', 201); // 201 characters, max is 200
-
-        // Act
-        var result = await _validator.ValidateAsync(longDescription);
-
-        // Assert
-        Assert.False(result.IsValid);
-        Assert.NotEmpty(result.Errors);
-        Assert.Contains(result.Errors, e => e.ErrorMessage == "The Description can't be more than 200 characters.");
     }
 }

@@ -15,10 +15,26 @@ public class DepartmentNameValidatorTests
         _mockRepository = new Mock<IDepartmentRepository>();
     }
 
+    public static TheoryData<string> ValidNameTestData => new()
+    {
+        // { validDepartmentName }
+        { "IT Department" }, // Valid name
+        { "AB" }, // Name at minimum length (2 characters)
+        { new string('A', 20) } // Name at maximum length (20 characters)
+    };
+
+    public static TheoryData<string, string> InvalidNameTestData => new()
+    {
+        // { invalidDepartmentName, expectedErrorMessage }
+        { null, "The Name is required." }, // Null name
+        { "", "The Name cannot be empty." }, // Empty name
+        { "   ", "The Name cannot be empty." }, // Whitespace name
+        { "A", "The Name must be at least 2 characters." }, // Name too short
+        { new string('A', 21), "The Name can't be more than 20 characters." } // Name too long
+    };
+
     [Theory]
-    [InlineData("IT Department")] // Valid name
-    [InlineData("AB")] // Name at minimum length (2 characters)
-    [InlineData("AAAAAAAAAAAAAAAAAAAA")] // Name at maximum length (20 characters)
+    [MemberData(nameof(ValidNameTestData))]
     public async Task ValidName_PassValidation(string departmentName)
     {
         // Arrange
@@ -38,11 +54,7 @@ public class DepartmentNameValidatorTests
 
 
     [Theory]
-    [InlineData(null, "The DepartmentName cannot be null.")] // Null name
-    [InlineData("", "The DepartmentName cannot be empty.")] // Empty name
-    [InlineData("   ", "The DepartmentName cannot be empty.")] // Whitespace name
-    [InlineData("A", "The DepartmentName must be at least 2 characters.")] // Name too short
-    [InlineData("AAAAAAAAAAAAAAAAAAAAA", "The DepartmentName can't be more than 20 characters.")] // Name too long
+    [MemberData(nameof(InvalidNameTestData))]
     public async Task InvalidName_FailsValidation(string invalidName, string errorMessage)
     {
         // Arrange

@@ -42,16 +42,14 @@ public class GetDepartmentListQueryTests
 
         var expectedList = new List<DepartmentDto>
         {
-            new DepartmentDto
-            {
+            new() {
                 Id = Guid.NewGuid(),
                 Name = "IT Department",
                 Description = "Information Technology",
                 IsActive = true,
                 CreatedAtUtc = DateTime.UtcNow
             },
-            new DepartmentDto
-            {
+            new() {
                 Id = Guid.NewGuid(),
                 Name = "HR Department",
                 Description = "Human Resources",
