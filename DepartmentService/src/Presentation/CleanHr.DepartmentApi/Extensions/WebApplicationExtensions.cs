@@ -1,7 +1,7 @@
 ﻿using HealthChecks.UI.Client;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 
-namespace CleanHr.DepartmentApi;
+namespace CleanHr.DepartmentApi.Extensions;
 
 internal static class WebApplicationExtensions
 {

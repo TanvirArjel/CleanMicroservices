@@ -97,9 +97,13 @@ internal static class Startup
     {
         ArgumentNullException.ThrowIfNull(app);
 
-        app.ApplyDatabaseMigrations();
+        // Skip database operations in Test environment
+        if (app.Environment.EnvironmentName != "Test")
+        {
+            app.ApplyDatabaseMigrations();
 
-        await app.SeedDatabaseAsync();
+            await app.SeedDatabaseAsync();
+        }
 
         app.Use((context, next) =>
         {

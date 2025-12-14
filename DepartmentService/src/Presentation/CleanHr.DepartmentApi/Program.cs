@@ -4,7 +4,7 @@ using Serilog;
 
 namespace CleanHr.DepartmentApi;
 
-internal static class Program
+public class Program
 {
     public static async Task Main(string[] args)
     {
@@ -48,11 +48,7 @@ internal static class Program
         catch (Exception ex)
         {
             Log.Fatal(ex, "CleanHR API application failed to start");
-            string environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
-            if (environment == Environments.Development)
-            {
-                throw;
-            }
+            throw;
         }
         finally
         {

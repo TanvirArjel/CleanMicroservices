@@ -9,6 +9,7 @@
 
 	<ItemGroup>
 		<InternalsVisibleTo Include="CleanHr.DepartmentApi.Persistence.RDB.UnitTests" />
+		<InternalsVisibleTo Include="CleanHr.DepartmentApi.IntegrationTests" />
 	</ItemGroup>
 
 	<ItemGroup>

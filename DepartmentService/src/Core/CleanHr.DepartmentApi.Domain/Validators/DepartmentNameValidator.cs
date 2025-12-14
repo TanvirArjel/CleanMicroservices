@@ -19,20 +19,21 @@ public class DepartmentNameValidator : AbstractValidator<string>
         RuleFor(name => name)
                 .Cascade(CascadeMode.Stop)
                 .NotEmpty()
-                .WithMessage("The DepartmentName cannot be empty.")
+                .WithMessage("The Name cannot be empty.")
                 .MinimumLength(2)
-                .WithMessage("The DepartmentName must be at least {MinLength} characters.")
+                .WithMessage("The Name must be at least {MinLength} characters.")
                 .MaximumLength(20)
-                .WithMessage("The DepartmentName can't be more than {MaxLength} characters.")
+                .WithMessage("The Name can't be more than {MaxLength} characters.")
                 .MustAsync(async (name, token) => await IsUniqueNameAsync(departmentId, name, token))
-                .WithMessage("The DepartmentName is already existent.");
+                .WithMessage("The Name is already existent.")
+                .OverridePropertyName("Name");
     }
 
     protected override bool PreValidate(ValidationContext<string> context, ValidationResult result)
     {
         if (context?.InstanceToValidate == null)
         {
-            result?.Errors.Add(new ValidationFailure(nameof(context.InstanceToValidate), "The DepartmentName cannot be null."));
+            result?.Errors.Add(new ValidationFailure("Name", "The Name is required."));
             return false;
         }
 

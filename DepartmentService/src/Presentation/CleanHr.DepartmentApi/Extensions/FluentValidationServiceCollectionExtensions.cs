@@ -1,7 +1,7 @@
 ﻿using FluentValidation;
 using SharpGrip.FluentValidation.AutoValidation.Mvc.Extensions;
 
-namespace CleanHr.DepartmentApi;
+namespace CleanHr.DepartmentApi.Extensions;
 
 internal static class FluentValidationServiceCollectionExtensions
 {

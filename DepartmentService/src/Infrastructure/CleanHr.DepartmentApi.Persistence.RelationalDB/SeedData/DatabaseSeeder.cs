@@ -48,7 +48,7 @@ internal sealed class DatabaseSeeder(
 
     private async Task SeedDepartmentsAsync()
     {
-        List<Department> departments = new();
+        List<Department> departments = [];
 
         var departmentData = new[]
         {
