@@ -10,11 +10,11 @@ namespace CleanHr.EmployeeApi.Filters;
 
 internal sealed class ExceptionHandlerFilter : IAsyncExceptionFilter
 {
-    private readonly ILogger<ExceptionHandlerFilter> _exceptionLogger;
+    private readonly ILogger<ExceptionHandlerFilter> _logger;
 
-    public ExceptionHandlerFilter(ILogger<ExceptionHandlerFilter> exceptionLogger)
+    public ExceptionHandlerFilter(ILogger<ExceptionHandlerFilter> logger)
     {
-        _exceptionLogger = exceptionLogger ?? throw new ArgumentNullException(nameof(exceptionLogger));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     public async Task OnExceptionAsync(ExceptionContext context)
@@ -40,7 +40,11 @@ internal sealed class ExceptionHandlerFilter : IAsyncExceptionFilter
         HttpRequest httpRequest = context.HttpContext.Request;
         string requestPath = httpRequest.GetEncodedUrl();
 
-        string requestBoy = string.Empty;
+        Dictionary<string, object> loggerContext = new()
+        {
+            { "RequestPath", requestPath },
+        };
+        using var _ = _logger.BeginScope(loggerContext);
 
         try
         {
@@ -48,19 +52,14 @@ internal sealed class ExceptionHandlerFilter : IAsyncExceptionFilter
         }
         catch (Exception ex)
         {
-            Console.WriteLine("Can't rewind body stream. " + ex.Message);
+            _logger.LogCritical(ex, "Can't rewind body stream.");
         }
 
         using StreamReader streamReader = new(httpRequest.Body, Encoding.UTF8);
-        requestBoy = await streamReader.ReadToEndAsync();
+        string requestBoy = await streamReader.ReadToEndAsync();
 
-        Dictionary<string, object> fields = new()
-        {
-            { "RequestPath", requestPath },
-            { "RequestBody", requestBoy }
-        };
-
-        _exceptionLogger.LogError(context.Exception, "Error occurred while processing request", fields);
+        loggerContext.Add("RequestBody", requestBoy);
+        _logger.LogCritical(context.Exception, "Error occurred while processing request");
 
         context.Result = new StatusCodeResult(500);
     }

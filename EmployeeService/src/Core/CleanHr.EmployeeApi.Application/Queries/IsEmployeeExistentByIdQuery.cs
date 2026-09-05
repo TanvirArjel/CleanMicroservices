@@ -17,7 +17,7 @@ internal class IsEmployeeExistentByIdQueryHandler(IEmployeeRepository employeeRe
     {
         request.ThrowIfNull(nameof(request));
 
-        bool isExistent = await _employeeRepository.ExistsAsync(e => e.Id == request.Id);
+        bool isExistent = await _employeeRepository.ExistsAsync(e => e.Id == request.Id, cancellationToken);
         return isExistent;
     }
 }

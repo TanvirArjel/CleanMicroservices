@@ -208,7 +208,7 @@ public class JwtTokenManager
 
             IList<string> roles = await _userManager.GetRolesAsync(user).ConfigureAwait(false);
 
-            if (roles != null && roles.Any())
+            if (roles != null && roles.Count != 0)
             {
                 foreach (string item in roles)
                 {

@@ -96,7 +96,7 @@ internal static class SwaggerGenerationServicesExtensions
                     return true;
                 }
 
-                if (actionApiVersionModel.DeclaredApiVersions.Any())
+                if (actionApiVersionModel.DeclaredApiVersions.Count != 0)
                 {
                     return actionApiVersionModel.DeclaredApiVersions.Any(v => $"v{v.MajorVersion}" == documentName);
                 }

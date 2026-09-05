@@ -24,8 +24,7 @@ public sealed class DepartmentServiceClient : IDepartmentServiceClient
 
             if (response.IsSuccessStatusCode)
             {
-                bool? exists = await response.Content.ReadFromJsonAsync<bool>(cancellationToken);
-                return exists ?? false;
+                return await response.Content.ReadFromJsonAsync<bool>(cancellationToken);
             }
 
             return false;

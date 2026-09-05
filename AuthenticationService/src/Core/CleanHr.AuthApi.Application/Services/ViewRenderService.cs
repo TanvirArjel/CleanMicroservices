@@ -48,6 +48,8 @@ public sealed class ViewRenderService
             { "Model", model  }
         };
 
+        using var loggerContext = _logger.BeginScope(logProperties);
+
         try
         {
             if (string.IsNullOrWhiteSpace(viewNameOrPath))
@@ -88,7 +90,7 @@ public sealed class ViewRenderService
         }
         catch (Exception exception)
         {
-            _logger.LogError(exception, "Error occurred while rendering view to string.", logProperties);
+            _logger.LogCritical(exception, "Error occurred while rendering view to string.");
             throw;
         }
     }
@@ -109,7 +111,7 @@ public sealed class ViewRenderService
         }
         catch (Exception exception)
         {
-            _logger.LogError(exception, "Error occurred while rendering view to string.");
+            _logger.LogCritical(exception, "Error occurred while rendering view to string.");
             throw;
         }
     }
