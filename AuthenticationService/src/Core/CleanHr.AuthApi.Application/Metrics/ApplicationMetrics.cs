@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
 
-namespace CleanHr.AuthApi.Application.Telemetry;
+namespace CleanHr.AuthApi.Application.Metrics;
 
 /// <summary>
 /// Provides custom business metrics using System.Diagnostics.Metrics API (OpenTelemetry compatible).

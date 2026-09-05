@@ -33,12 +33,6 @@ internal static class SerilogConfiguration
                     new LokiLabel { Key = "environment", Value = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production" },
                     new LokiLabel { Key = "service_name", Value = "DepartmentService" }
                 ],
-                propertiesAsLabels:
-                [
-                    "TraceId",
-                    "SpanId",
-                    "ParentId",
-                ],
                 //textFormatter: new Serilog.Formatting.Compact.RenderedCompactJsonFormatter(),
                 leavePropertiesIntact: true)
             .CreateLogger();

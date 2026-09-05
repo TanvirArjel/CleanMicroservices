@@ -2,15 +2,15 @@ namespace CleanHr.DepartmentApi.IntegrationTests.Models;
 
 public class CreateDepartmentRequest
 {
-    public string? Name { get; set; }
-    public string? Description { get; set; }
+    public string Name { get; set; }
+    public string Description { get; set; }
 }
 
 public class UpdateDepartmentRequest
 {
     public Guid Id { get; set; }
-    public string? Name { get; set; }
-    public string? Description { get; set; }
+    public string Name { get; set; }
+    public string Description { get; set; }
 }
 
 public class DepartmentResponse
@@ -26,8 +26,8 @@ public class DepartmentResponse
 public class SelectListItem
 {
     public bool Disabled { get; set; }
-    public object? Group { get; set; }
+    public object Group { get; set; }
     public bool Selected { get; set; }
-    public string? Text { get; set; }
-    public string? Value { get; set; }
+    public string Text { get; set; }
+    public string Value { get; set; }
 }

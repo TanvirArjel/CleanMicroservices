@@ -21,6 +21,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	  <ProjectReference Include="../../CleanHr.AuthApi.Common/CleanHr.AuthApi.Common.csproj" />
 	  <ProjectReference Include="..\CleanHr.AuthApi.Domain\CleanHr.AuthApi.Domain.csproj" />
 	</ItemGroup>
 

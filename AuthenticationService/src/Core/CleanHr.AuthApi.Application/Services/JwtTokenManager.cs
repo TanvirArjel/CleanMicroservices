@@ -8,7 +8,7 @@ using System.Text;
 using CleanHr.AuthApi.Application.Extensions;
 using CleanHr.AuthApi.Application.Infrastructures;
 using CleanHr.AuthApi.Application.Queries;
-using CleanHr.AuthApi.Application.Telemetry;
+using CleanHr.AuthApi.Common.Telemetry;
 using CleanHr.AuthApi.Domain;
 using CleanHr.AuthApi.Domain.Models;
 using MediatR;
@@ -50,7 +50,7 @@ public class JwtTokenManager
 
     public async Task<Result<AuthenticationResult>> GetTokenAsync(string userId)
     {
-        using var activity = ApplicationActivityConstants.Source.StartActivity("GetJwtToken", ActivityKind.Internal);
+        using var activity = Tracing.Source.StartActivity("GetJwtToken", ActivityKind.Internal);
         activity?.SetTag("user.id", userId);
 
         if (string.IsNullOrWhiteSpace(userId))
@@ -78,7 +78,7 @@ public class JwtTokenManager
 
     public async Task<Result<AuthenticationResult>> GetTokenAsync(ApplicationUser user)
     {
-        using var activity = ApplicationActivityConstants.Source.StartActivity("GetJwtToken", ActivityKind.Internal);
+        using var activity = Tracing.Source.StartActivity("GetJwtToken", ActivityKind.Internal);
         activity?.SetTag("user.id", user?.Id.ToString());
 
         var result = await GetTokenAsync(user, oldRefreshToken: null);
@@ -97,7 +97,7 @@ public class JwtTokenManager
 
     public async Task<Result<AuthenticationResult>> GetTokenAsync(string accessToken, string refreshToken)
     {
-        using var activity = ApplicationActivityConstants.Source.StartActivity(
+        using var activity = Tracing.Source.StartActivity(
                "GenerateJwtToken",
                ActivityKind.Internal);
 

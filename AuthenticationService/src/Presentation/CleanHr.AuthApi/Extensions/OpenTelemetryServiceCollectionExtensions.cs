@@ -1,4 +1,5 @@
-using CleanHr.AuthApi.Application.Telemetry;
+using CleanHr.AuthApi.Application.Metrics;
+using CleanHr.AuthApi.Common.Telemetry;
 using CleanHr.AuthApi.Persistence.RelationalDB.Constants;
 using Microsoft.AspNetCore.Mvc;
 using OpenTelemetry.Metrics;
@@ -36,8 +37,7 @@ internal static class OpenTelemetryServiceCollectionExtensions
             })
             .WithTracing(tracing =>
             {
-                tracing.AddSource(ApplicationActivityConstants.SourceName);
-                tracing.AddSource(InfrastructureActivityConstants.SourceName);
+                tracing.AddSource(Tracing.SourceName);
 
                 tracing.AddAspNetCoreInstrumentation(options =>
                 {

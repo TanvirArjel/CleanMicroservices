@@ -1,6 +1,5 @@
 using System.Diagnostics;
 using CleanHr.AuthApi.Application.Services;
-using CleanHr.AuthApi.Application.Telemetry;
 using CleanHr.AuthApi.Domain;
 using CleanHr.AuthApi.Domain.Models;
 using CleanHr.AuthApi.Domain.Repositories;
@@ -9,6 +8,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
 using TanvirArjel.ArgumentChecker;
 using TanvirArjel.EFCore.GenericRepository;
+using CleanHr.AuthApi.Common.Telemetry;
+using CleanHr.AuthApi.Application.Metrics;
 
 namespace CleanHr.AuthApi.Application.Commands;
 
@@ -42,25 +43,35 @@ public sealed class LoginUserCommand(string emailOrUserName, string password) : 
 
         public async Task<Result<AuthenticationResult>> Handle(LoginUserCommand request, CancellationToken cancellationToken)
         {
-            using var activity = ApplicationActivityConstants.Source.StartActivity("LoginUser", ActivityKind.Internal);
+            using var activity = Tracing.Source.StartActivity("LoginUser", ActivityKind.Internal);
             activity.SetTag("login.identifier", request.EmailOrUserName);
+
+            var loggerContext = new Dictionary<string, object>
+            {
+                { "EmailOrUserName", request.EmailOrUserName }
+            };
+            using var loggerScope = _logger.BeginScope(loggerContext);
 
             ApplicationMetrics.ActiveLogins.Add(1);
 
             try
             {
-                _logger.LogInformation("Processing login for {EmailOrUserName}", request.EmailOrUserName);
+                _logger.LogInformation("Received request to handle user login");
                 request.ThrowIfNull(nameof(request));
 
                 if (string.IsNullOrWhiteSpace(request.EmailOrUserName))
                 {
                     ApplicationMetrics.RecordLoginAttempt("validation_failed", "missing_email_or_username");
+                    _logger.LogWarning("Login failed: Missing email or username");
+
                     return Result<AuthenticationResult>.Failure("EmailOrUserName", "The email or username is required.");
                 }
 
                 if (string.IsNullOrWhiteSpace(request.Password))
                 {
                     ApplicationMetrics.RecordLoginAttempt("validation_failed", "missing_password");
+                    _logger.LogWarning("Login failed: password is null or empty");
+
                     return Result<AuthenticationResult>.Failure("Password", "The password is required.");
                 }
 
@@ -68,6 +79,9 @@ public sealed class LoginUserCommand(string emailOrUserName, string password) : 
 
                 if (findUserResult.IsSuccess == false)
                 {
+                    loggerContext.Add("Errors", findUserResult.Errors);
+                    _logger.LogError("Error occurred while retrieving the user");
+
                     return Result<AuthenticationResult>.Failure("UserRetrieval", "An error occurred while retrieving the user.");
                 }
 
@@ -75,33 +89,40 @@ public sealed class LoginUserCommand(string emailOrUserName, string password) : 
                 {
                     ApplicationMetrics.RecordLoginAttempt("failed", "user_not_found");
                     ApplicationMetrics.RecordUserLookup(found: false);
+                    _logger.LogError("Login failed: User not found");
+
                     return Result<AuthenticationResult>.Failure("EmailOrUserName", "The email or username does not exist.");
                 }
 
                 ApplicationMetrics.RecordUserLookup(found: true);
                 ApplicationMetrics.RecordLoginAttempt("success", "user_found");
-
+                loggerContext.Add("UserId", findUserResult.Value.Id);
+                _logger.LogInformation("User found, proceeding with password validation");
                 var isPasswordValid = await ValidatePasswordAsync(findUserResult.Value, request.Password);
                 if (!isPasswordValid)
                 {
                     ApplicationMetrics.RecordLoginAttempt("failed", "invalid_password");
+                    _logger.LogError("Login failed: Invalid password for the user");
+
                     return Result<AuthenticationResult>.Failure("Password", "The password is incorrect.");
                 }
 
+                _logger.LogInformation("Password validation successful, generating JWT tokens for the user");
                 var authResult = await _jwtTokenManager.GetTokenAsync(findUserResult.Value);
 
                 if (authResult.IsSuccess == false)
                 {
                     activity?.SetStatus(ActivityStatusCode.Error, "Failed to generate JWT tokens");
                     ApplicationMetrics.RecordLoginAttempt("failed", "token_generation_failed");
-                    _logger.LogError("Failed to generate JWT tokens for user {UserId}", findUserResult.Value.Id);
+                    _logger.LogError("Error occurred while generating JWT tokens for the user");
+
                     return Result<AuthenticationResult>.Failure("TokenGeneration", "Failed to generate authentication tokens.");
                 }
 
                 await RecordLoginAsync(findUserResult.Value, cancellationToken);
                 activity?.SetStatus(ActivityStatusCode.Ok, "Login successful");
                 ApplicationMetrics.RecordLoginAttempt("success", "none");
-                _logger.LogInformation("Login successful for user {UserId}", findUserResult.Value.Id);
+                _logger.LogInformation("Login successful, returning authentication result");
 
                 return Result<AuthenticationResult>.Success(authResult.Value);
             }
@@ -109,8 +130,8 @@ public sealed class LoginUserCommand(string emailOrUserName, string password) : 
             {
                 activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
                 ApplicationMetrics.RecordLoginAttempt("error", ex.GetType().Name);
+                _logger.LogCritical(ex, "An unexpected error occurred during the login process");
 
-                _logger.LogError(ex, "Unhandled exception occurred while processing login for {EmailOrUserName}", request.EmailOrUserName);
                 return Result<AuthenticationResult>.Failure("Exception", "An error occurred while processing the login.");
             }
             finally
@@ -120,22 +141,23 @@ public sealed class LoginUserCommand(string emailOrUserName, string password) : 
         }
         private async Task<bool> ValidatePasswordAsync(ApplicationUser user, string password)
         {
-            using var activity = ApplicationActivityConstants.Source.StartActivity("ValidatePassword", ActivityKind.Internal);
+            using var activity = Tracing.Source.StartActivity("ValidatePassword", ActivityKind.Internal);
             activity?.SetTag("userId", user.Id.ToString());
 
-            _logger.LogDebug("Validating password for user {User}", user);
+            _logger.LogInformation("Validating password for the user");
+            var isValid = await _userManager.CheckPasswordAsync(user, password);
 
-            var isValid = await _userManager.CheckPasswordAsync(user, password); if (isValid)
+            if (isValid)
             {
                 activity?.SetStatus(ActivityStatusCode.Ok, "Password validation successful");
                 ApplicationMetrics.RecordPasswordValidation(isValid: true);
-                _logger.LogInformation("Password validation successful for user {UserId}", user.Id);
+                _logger.LogInformation("Password validation successful for the user");
             }
             else
             {
                 activity?.SetStatus(ActivityStatusCode.Error, "Password validation failed");
                 ApplicationMetrics.RecordPasswordValidation(isValid: false);
-                _logger.LogWarning("Login failed: Invalid password for user {UserId}", user.Id);
+                _logger.LogWarning("Password validation failed: Invalid password for the user");
             }
 
             return isValid;
@@ -143,27 +165,27 @@ public sealed class LoginUserCommand(string emailOrUserName, string password) : 
 
         private async Task RecordLoginAsync(ApplicationUser user, CancellationToken cancellationToken)
         {
-            using var activity = ApplicationActivityConstants.Source.StartActivity(
+            using var activity = Tracing.Source.StartActivity(
                "RecordLogin",
                 ActivityKind.Internal);
             activity?.SetTag("userId", user?.Id.ToString());
 
             try
             {
-                _logger.LogDebug("Recording login for user {User}", user);
+                _logger.LogInformation("Recording login for the user");
 
                 user.RecordLogin();
                 _repository.Update(user);
                 await _repository.SaveChangesAsync(cancellationToken);
 
                 activity.SetStatus(ActivityStatusCode.Ok, "Login recorded successfully");
-                _logger.LogInformation("Login recorded successfully for user {UserId}", user.Id);
+                _logger.LogInformation("Login recorded successfully for the user");
             }
             catch (Exception ex)
             {
                 activity.SetStatus(ActivityStatusCode.Error, "Failed to record login");
 
-                _logger.LogError(ex, "Failed to record login for user {UserId}", user.Id);
+                _logger.LogError(ex, "Failed to record login for the user");
             }
         }
     }

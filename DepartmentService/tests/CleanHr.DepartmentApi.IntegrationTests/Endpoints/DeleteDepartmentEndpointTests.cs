@@ -15,8 +15,8 @@ public class DeleteDepartmentEndpointTests : IClassFixture<DepartmentApiWebAppli
         _client = factory.CreateClient();
     }
 
-    private static string GenerateValidName() => $"Dept{Guid.NewGuid().ToString()[..8]}";
-    private static string GenerateValidDescription() => "This is a valid test description that meets the minimum length requirement.";
+    private static string GeneratedValidName => $"Dept{Guid.NewGuid().ToString()[..8]}";
+    private static string GeneratedValidDescription => "This is a valid test description that meets the minimum length requirement.";
 
     [Fact]
     public async Task Delete_ReturnsNoContent_WhenDepartmentExists()
@@ -24,8 +24,8 @@ public class DeleteDepartmentEndpointTests : IClassFixture<DepartmentApiWebAppli
         // Arrange - First create a department to delete
         var createRequest = new CreateDepartmentRequest
         {
-            Name = GenerateValidName(),
-            Description = GenerateValidDescription()
+            Name = GeneratedValidName,
+            Description = GeneratedValidDescription
         };
         var createResponse = await _client.PostAsJsonAsync(TestConstants.BaseUrl, createRequest);
         createResponse.StatusCode.Should().Be(HttpStatusCode.Created);
@@ -63,13 +63,13 @@ public class DeleteDepartmentEndpointTests : IClassFixture<DepartmentApiWebAppli
         // Arrange - Create two departments
         var dept1 = new CreateDepartmentRequest
         {
-            Name = GenerateValidName(),
-            Description = GenerateValidDescription()
+            Name = GeneratedValidName,
+            Description = GeneratedValidDescription
         };
         var dept2 = new CreateDepartmentRequest
         {
-            Name = GenerateValidName(),
-            Description = GenerateValidDescription()
+            Name = GeneratedValidName,
+            Description = GeneratedValidDescription
         };
 
         var createResponse1 = await _client.PostAsJsonAsync(TestConstants.BaseUrl, dept1);
@@ -98,18 +98,18 @@ public class DeleteDepartmentEndpointTests : IClassFixture<DepartmentApiWebAppli
     public async Task Delete_DoesNotAffectOtherDepartments()
     {
         // Arrange - Create two departments
-        var deptToDeleteName = GenerateValidName();
-        var deptToKeepName = GenerateValidName();
+        var deptToDeleteName = GeneratedValidName;
+        var deptToKeepName = GeneratedValidName;
 
         var deptToDelete = new CreateDepartmentRequest
         {
             Name = deptToDeleteName,
-            Description = GenerateValidDescription()
+            Description = GeneratedValidDescription
         };
         var deptToKeep = new CreateDepartmentRequest
         {
             Name = deptToKeepName,
-            Description = GenerateValidDescription()
+            Description = GeneratedValidDescription
         };
 
         var createResponse1 = await _client.PostAsJsonAsync(TestConstants.BaseUrl, deptToDelete);

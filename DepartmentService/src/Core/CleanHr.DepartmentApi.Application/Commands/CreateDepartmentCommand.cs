@@ -44,13 +44,13 @@ public sealed class CreateDepartmentCommand : IRequest<Result<Guid>>
         public async Task<Result<Guid>> Handle(CreateDepartmentCommand request, CancellationToken cancellationToken)
         {
             using var activity = ApplicationActivityConstants.Source.StartActivity(
-                "CreateDepartment",
+                "CreateDepartmentCommandHandler.Handle",
                 ActivityKind.Internal);
             activity?.SetTag("department.name", request.Name);
 
             using var loggerScope = _logger.BeginScope(new Dictionary<string, object>
             {
-                ["DepartmentCreationRequest"] = request
+                ["@DepartmentCreationRequest"] = request,
             });
 
             try

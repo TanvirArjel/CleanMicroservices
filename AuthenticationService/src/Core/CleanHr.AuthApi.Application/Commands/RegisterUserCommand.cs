@@ -1,4 +1,6 @@
+using System.Diagnostics;
 using System.Linq;
+using CleanHr.AuthApi.Common.Telemetry;
 using CleanHr.AuthApi.Domain;
 using CleanHr.AuthApi.Domain.Models;
 using CleanHr.AuthApi.Domain.Repositories;
@@ -28,6 +30,7 @@ public sealed record RegisterUserCommand(
 
         public async Task<Result<Guid>> Handle(RegisterUserCommand request, CancellationToken cancellationToken)
         {
+            var activity = Tracing.Source.StartActivity("RegisterUserCommandHandler.Handle", ActivityKind.Internal);
             request.ThrowIfNull(nameof(request));
 
             if (request.Password != request.ConfirmPassword)
