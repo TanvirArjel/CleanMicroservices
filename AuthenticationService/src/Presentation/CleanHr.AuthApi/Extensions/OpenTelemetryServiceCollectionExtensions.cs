@@ -1,6 +1,5 @@
 using CleanHr.AuthApi.Application.Metrics;
 using CleanHr.AuthApi.Common.Telemetry;
-using CleanHr.AuthApi.Persistence.RelationalDB.Constants;
 using Microsoft.AspNetCore.Mvc;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;

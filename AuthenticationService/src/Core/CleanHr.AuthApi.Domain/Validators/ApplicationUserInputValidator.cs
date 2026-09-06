@@ -1,5 +1,4 @@
 using System;
-using CleanHr.AuthApi.Domain.Models;
 using CleanHr.AuthApi.Domain.Repositories;
 using FluentValidation;
 
