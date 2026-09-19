@@ -1,5 +1,4 @@
 ﻿using System.Threading;
-using CleanHr.AuthApi.Application.Extensions;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Logging;

@@ -1,5 +1,4 @@
 ﻿using System.Text;
-using CleanHr.AuthApi.Application.Extensions;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;

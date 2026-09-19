@@ -5,7 +5,6 @@ using System.Linq;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
-using CleanHr.AuthApi.Application.Extensions;
 using CleanHr.AuthApi.Application.Infrastructures;
 using CleanHr.AuthApi.Application.Queries;
 using CleanHr.AuthApi.Common.Telemetry;
