@@ -4,7 +4,7 @@ using CleanHr.AuthApi.Common.Telemetry;
 using CleanHr.AuthApi.Domain;
 using CleanHr.AuthApi.Domain.Models;
 using CleanHr.AuthApi.Domain.Repositories;
-using CleanHr.AuthApi.Application.Metrics;
+using CleanHr.AuthApi.Common.Metrics;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;

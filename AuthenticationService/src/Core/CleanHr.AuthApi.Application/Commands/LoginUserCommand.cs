@@ -9,7 +9,7 @@ using Microsoft.Extensions.Logging;
 using TanvirArjel.ArgumentChecker;
 using TanvirArjel.EFCore.GenericRepository;
 using CleanHr.AuthApi.Common.Telemetry;
-using CleanHr.AuthApi.Application.Metrics;
+using CleanHr.AuthApi.Common.Metrics;
 
 namespace CleanHr.AuthApi.Application.Commands;
 
@@ -64,6 +64,7 @@ public sealed class LoginUserCommand(string emailOrUserName, string password) : 
 
                 if (string.IsNullOrWhiteSpace(request.EmailOrUserName))
                 {
+                    activity?.SetStatus(ActivityStatusCode.Error, "Email or username is null or empty");
                     _applicationMetrics.RecordFailureOperation(operationName, "missing_email_or_username");
                     _logger.LogWarning("Login failed: Missing email or username");
 
@@ -72,6 +73,7 @@ public sealed class LoginUserCommand(string emailOrUserName, string password) : 
 
                 if (string.IsNullOrWhiteSpace(request.Password))
                 {
+                    activity?.SetStatus(ActivityStatusCode.Error, "Password is null or empty");
                     _applicationMetrics.RecordFailureOperation(operationName, "missing_password");
                     _logger.LogWarning("Login failed: password is null or empty");
 
@@ -82,6 +84,8 @@ public sealed class LoginUserCommand(string emailOrUserName, string password) : 
 
                 if (findUserResult.IsSuccess == false)
                 {
+                    activity?.SetStatus(ActivityStatusCode.Error, "Failed to retrieve user");
+                    _applicationMetrics.RecordFailureOperation(operationName, "user_retrieval_failed");
                     loggerContext.Add("Errors", findUserResult.Errors);
                     _logger.LogError("Error occurred while retrieving the user");
 
@@ -90,6 +94,7 @@ public sealed class LoginUserCommand(string emailOrUserName, string password) : 
 
                 if (findUserResult.Value == null)
                 {
+                    activity?.SetStatus(ActivityStatusCode.Error, "User not found");
                     _applicationMetrics.RecordFailureOperation(operationName, "user_not_found");
                     _logger.LogError("Login failed: User not found");
 
@@ -101,6 +106,7 @@ public sealed class LoginUserCommand(string emailOrUserName, string password) : 
                 var isPasswordValid = await ValidatePasswordAsync(findUserResult.Value, request.Password);
                 if (!isPasswordValid)
                 {
+                    activity?.SetStatus(ActivityStatusCode.Error, "Invalid password");
                     _applicationMetrics.RecordFailureOperation(operationName, "invalid_password");
                     _logger.LogError("Login failed: Invalid password for the user");
 

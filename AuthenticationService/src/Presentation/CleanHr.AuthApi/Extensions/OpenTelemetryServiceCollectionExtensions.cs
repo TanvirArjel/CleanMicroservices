@@ -1,4 +1,4 @@
-using CleanHr.AuthApi.Application.Metrics;
+using CleanHr.AuthApi.Common.Metrics;
 using CleanHr.AuthApi.Common.Telemetry;
 using Microsoft.AspNetCore.Mvc;
 using OpenTelemetry.Metrics;

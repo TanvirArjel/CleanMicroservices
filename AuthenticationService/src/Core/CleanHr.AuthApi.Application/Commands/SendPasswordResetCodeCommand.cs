@@ -2,7 +2,7 @@
 using System.Security.Cryptography;
 using System.Diagnostics;
 using CleanHr.AuthApi.Application.Infrastructures;
-using CleanHr.AuthApi.Application.Metrics;
+using CleanHr.AuthApi.Common.Metrics;
 using CleanHr.AuthApi.Application.Services;
 using CleanHr.AuthApi.Common.Telemetry;
 using CleanHr.AuthApi.Domain;

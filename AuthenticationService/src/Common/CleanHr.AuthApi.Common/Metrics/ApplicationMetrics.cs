@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
 
-namespace CleanHr.AuthApi.Application.Metrics;
+namespace CleanHr.AuthApi.Common.Metrics;
 
 /// <summary>
 /// Unified metrics telemetry service using generic instruments parameterized by operation tags.

@@ -2,7 +2,7 @@
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <EnableNETAnalyzers>true</EnableNETAnalyzers>
-    <AnalysisMode>AllEnabledByDefault</AnalysisMode>
+    <AnalysisMode>all</AnalysisMode>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <UserSecretsId>a5a03509-4553-498c-a6b3-5bb891a732b3</UserSecretsId>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>

@@ -1,6 +1,6 @@
 ﻿using System.Data;
 using System.Diagnostics;
-using CleanHr.AuthApi.Application.Metrics;
+using CleanHr.AuthApi.Common.Metrics;
 using CleanHr.AuthApi.Common.Telemetry;
 using CleanHr.AuthApi.Domain;
 using CleanHr.AuthApi.Domain.Models;

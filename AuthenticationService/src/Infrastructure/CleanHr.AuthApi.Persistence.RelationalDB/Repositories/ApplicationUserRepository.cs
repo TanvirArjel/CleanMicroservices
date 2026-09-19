@@ -61,8 +61,8 @@ internal sealed class ApplicationUserRepository : IApplicationUserRepository
                 .Where(u => u.NormalizedEmail == normalizedEmailOrUserName || u.NormalizedUserName == normalizedEmailOrUserName)
                 .FirstOrDefaultAsync();
 
-            _logger.LogInformation("Retrieved user with email/username: {EmailOrUserName}, IsFound: {IsFound}", emailOrUserName, user != null);
             activity.SetStatus(ActivityStatusCode.Ok, "User retrieval successful");
+            _logger.LogInformation("Retrieved user with email/username: {EmailOrUserName}, IsFound: {IsFound}", emailOrUserName, user != null);
             return Result<ApplicationUser>.Success(user);
         }
         catch (Exception ex)

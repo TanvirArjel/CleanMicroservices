@@ -2,7 +2,7 @@
 	<PropertyGroup>
 		<TargetFramework>net10.0</TargetFramework>
 		<EnableNETAnalyzers>true</EnableNETAnalyzers>
-		<AnalysisMode>AllEnabledByDefault</AnalysisMode>
+		<AnalysisMode>all</AnalysisMode>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 	</PropertyGroup>
 
@@ -21,7 +21,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <ProjectReference Include="../../CleanHr.AuthApi.Common/CleanHr.AuthApi.Common.csproj" />
+	  <ProjectReference Include="../../Common/CleanHr.AuthApi.Common/CleanHr.AuthApi.Common.csproj" />
 	  <ProjectReference Include="..\CleanHr.AuthApi.Domain\CleanHr.AuthApi.Domain.csproj" />
 	</ItemGroup>
 
